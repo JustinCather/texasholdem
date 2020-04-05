@@ -47,7 +47,7 @@ export function signalRInvokeMiddleware(store: any) {
                 connection.invoke('DecrementCounter');
                 break;
             case "ADD_PLAYER":
-                connection.invoke("AddPlayer", "test", action.name)
+                connection.invoke("AddPlayer", action.game, action.name)
                 break;
         }
 
