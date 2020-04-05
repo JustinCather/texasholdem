@@ -7,6 +7,6 @@ namespace TexasHoldEm.Game
 {
     public class GameProvider
     {
-        public Dictionary<string, Game> Games => new Dictionary<string, Game>();
+        public Dictionary<string, Game> Games { get; } = new Dictionary<string, Game>();
     }
 }

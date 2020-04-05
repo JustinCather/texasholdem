@@ -4,6 +4,7 @@ import { connectRouter, routerMiddleware } from 'connected-react-router';
 import { History } from 'history';
 import { ApplicationState, reducers } from './';
 import * as signalR from "@microsoft/signalr";
+import { connect } from 'http2';
 
 export default function configureStore(history: History, initialState?: ApplicationState) {
     const middleware = [
@@ -45,13 +46,16 @@ export function signalRInvokeMiddleware(store: any) {
             case "SIGNALR_DECREMENT_COUNT":
                 connection.invoke('DecrementCounter');
                 break;
+            case "ADD_PLAYER":
+                connection.invoke("AddPlayer", "test", action.name)
+                break;
         }
 
         return next(action);
     }
 }
 
-export function signalRRegisterCommands(store: any, callback: Function) {
+export function signalRRegisterCommands(store: any) {
 
     connection.on('IncrementCounter', data => {
         store.dispatch({ type: 'INCREMENT_COUNT' })
@@ -63,5 +67,10 @@ export function signalRRegisterCommands(store: any, callback: Function) {
         console.log("Count has been decremented");
     })
 
-    connection.start().then(callback());
+    connection.on('newPlayerJoined', (game, added, players) => {
+        store.dispatch({type: 'PLAYER_ADDED', name: added, players: players});
+        console.log("A new player has been added");
+    });
+
+    connection.start();
 }

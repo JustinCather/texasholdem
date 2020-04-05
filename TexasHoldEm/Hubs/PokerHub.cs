@@ -8,32 +8,33 @@ namespace TexasHoldEm.Hubs
 {
     public class PokerHub : Hub
     {
-        //private Game.GameProvider gameProvider;
+        private Game.GameProvider gameProvider;
 
-        //public PokerHub(Game.GameProvider gameProvider)
-        //{
-        //    this.gameProvider = gameProvider;
-        //}
+        public PokerHub(Game.GameProvider gameProvider)
+        {
+            this.gameProvider = gameProvider;
+        }
 
-        //public async Task NewGame(string name)
-        //{
-        //    if (!gameProvider.Games.ContainsKey(name))
-        //    {
-        //        gameProvider.Games[name] = new Game.Game();
-        //    }
+        public async Task NewGame(string name)
+        {
+            if (!gameProvider.Games.ContainsKey(name))
+            {
+                gameProvider.Games[name] = new Game.Game();
+            }
 
-        //    await Clients.All.SendAsync("gamesAvailable", gameProvider.Games.Keys);
-        //}
+            await Clients.All.SendAsync("gamesAvailable", gameProvider.Games.Keys);
+        }
 
-        //public async Task AddPlayer(string game, string name)
-        //{
-        //    if (gameProvider.Games.ContainsKey(name))
-        //    {
-        //        var g = gameProvider.Games[game];
-        //        g.AddPlayer(Context.ConnectionId, name);
-        //        await Clients.All.SendAsync("newPlayerJoined", game, name);
-        //    }
-        //}
+        public async Task AddPlayer(string game, string name)
+        {
+            if (!gameProvider.Games.ContainsKey(game))
+            {
+                gameProvider.Games[game] = new Game.Game();
+            }
+            var g = gameProvider.Games[game];
+            g.AddPlayer(Context.ConnectionId, name);
+            await Clients.All.SendAsync("newPlayerJoined", game, name, g.Players.Select(x => x.Name).ToArray());
+        }
 
         public async Task IncrementCounter()
         {
