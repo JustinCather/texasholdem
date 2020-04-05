@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,16 +16,6 @@ namespace TexasHoldEm.Hubs
             this.gameProvider = gameProvider;
         }
 
-        public async Task NewGame(string name)
-        {
-            if (!gameProvider.Games.ContainsKey(name))
-            {
-                gameProvider.Games[name] = new Game.Game();
-            }
-
-            await Clients.All.SendAsync("gamesAvailable", gameProvider.Games.Keys);
-        }
-
         public async Task AddPlayer(string game, string name)
         {
             if (!gameProvider.Games.ContainsKey(game))
@@ -32,8 +23,30 @@ namespace TexasHoldEm.Hubs
                 gameProvider.Games[game] = new Game.Game();
             }
             var g = gameProvider.Games[game];
-            g.AddPlayer(Context.ConnectionId, name);
-            await Clients.All.SendAsync("newPlayerJoined", game, name, g.Players.Select(x => x.Name).ToArray());
+
+            await Groups.AddToGroupAsync(Context.ConnectionId, game);
+
+            if (g.AddPlayer(name, Context.ConnectionId))
+            {   
+                await Clients.Group(game).SendAsync("newPlayerJoined", game, name, g.Players.Select(x => x.Name).ToArray());
+            }
+        }
+
+        public async Task StartGame(string game)
+        {
+            var g = gameProvider.Games[game];
+
+            g.Start();
+
+            foreach (var p in g.Players)
+            {
+                foreach (var c in p.ConnectionIds)
+                {
+                    await Clients.Client(c).SendAsync("playerBeingDealt", p.Hand[0].ToString(), p.Hand[1].ToString());
+                }
+            }
+
+            await Clients.Group(game).SendAsync("gameStarted");
         }
 
         public async Task IncrementCounter()

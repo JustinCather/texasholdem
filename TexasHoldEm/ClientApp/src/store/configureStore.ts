@@ -49,6 +49,9 @@ export function signalRInvokeMiddleware(store: any) {
             case "ADD_PLAYER":
                 connection.invoke("AddPlayer", action.game, action.name)
                 break;
+            case 'START_GAME':
+                connection.invoke('StartGame', action.game);
+                break;
         }
 
         return next(action);
@@ -70,6 +73,19 @@ export function signalRRegisterCommands(store: any) {
     connection.on('newPlayerJoined', (game, added, players) => {
         store.dispatch({type: 'PLAYER_ADDED', name: added, players: players});
         console.log("A new player has been added");
+    });
+
+    connection.on('gameStarted', data => {
+        store.dispatch({type: 'GAME_STARTED'});
+        console.log("The game has started");
+    });
+
+    //(c1Suite,  c1Value, c2Suite, c2Value)
+    connection.on('playerBeingDealt', (first, second) => {
+        const cards = [first, second];
+
+        store.dispatch({type: 'PLAYER_BEING_DEALT', hand: cards});
+        console.log("The player was dealt");
     });
 
     connection.start();

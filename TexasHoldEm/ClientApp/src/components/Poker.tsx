@@ -10,22 +10,25 @@ type PokerProps =
     typeof PokerStore.actionCreators &
     RouteComponentProps<{}>;
 
-class Poker extends React.PureComponent<PokerProps> {    
+class Poker extends React.PureComponent<PokerProps> {
     public render() {
-        const { joined, otherPlayers, gameName, playerName } = this.props;
+        const { started, joined, gameName, playerName } = this.props;
+        let startedState;
+
+        if (started)
+        {
+            startedState = this.renderStarted();
+        }
+        else
+        {
+            startedState = this.renderNotStarted();
+        }
 
         if (joined) {
             return (
                 <React.Fragment>
-                    <h1>Poker</h1>
-
-                    <p aria-live="polite">Hello <strong>{this.props.playerName}</strong></p>
-                    <p aria-live="polite">Current number of players: <strong>{this.props.playerCount}</strong></p>
-                    <ul>
-                        {otherPlayers.map((value, index) => {
-                            return <li key={index}>{value}</li>
-                        })}
-                    </ul>
+                    {this.renderHeader()}
+                    {startedState}
                 </React.Fragment>
             );
         }
@@ -47,6 +50,51 @@ class Poker extends React.PureComponent<PokerProps> {
                 </React.Fragment>
             );
         }
+    }
+
+    private renderStarted() {
+        const { hand } = this.props;
+        let cards;
+        if (hand === null || hand === undefined || hand.length < 2)
+        {
+            return (<div></div>);
+        }
+        else
+        {
+            return (
+                <div>
+                    <p>You were dealt: {hand[0]} and {hand[1]}</p>
+                </div>
+            );
+        }
+    }
+
+    private renderNotStarted() {
+        return (
+            <button type="button"
+                className="btn btn-primary btn-lg"
+                onClick={() => { this.props.startGame(); }}>
+                Increment
+            </button>
+        );
+    }
+
+    private renderHeader() {
+        const { otherPlayers, playerCount, gameName, playerName } = this.props;
+
+        return (
+            <div>
+                <h1>Poker</h1>
+
+                <p aria-live="polite">Hello <strong>{playerName}</strong></p>
+                <p aria-live="polite">Current number of players in {gameName}: <strong>{playerCount}</strong></p>
+                <ul>
+                    {otherPlayers.map((value, index) => {
+                        return <li key={index}>{value}</li>
+                    })}
+                </ul>
+            </div>
+        );
     }
 };
 
