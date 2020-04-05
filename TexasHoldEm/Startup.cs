@@ -25,18 +25,17 @@ namespace TexasHoldEm
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
-
-            // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
             {
+                // In production, the React files will be served from this directory
                 configuration.RootPath = "ClientApp/build";
             });
-
             services.AddSignalR();
+            services.AddSingleton<Game.GameProvider>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IHostApplicationLifetime hostApplicationLifetime)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -49,7 +48,7 @@ namespace TexasHoldEm
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseSpaStaticFiles();
 
@@ -57,7 +56,7 @@ namespace TexasHoldEm
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapHub<ChatHub>("/chat");
+                endpoints.MapHub<PokerHub>("/poker");
 
                 endpoints.MapControllerRoute(
                     name: "default",
@@ -73,20 +72,6 @@ namespace TexasHoldEm
                     spa.UseProxyToSpaDevelopmentServer("http://localhost:3000/");
                     //spa.UseReactDevelopmentServer(npmScript: "start");
                 }
-            });
-
-            hostApplicationLifetime.ApplicationStarted.Register(() =>
-            {
-
-                var serviceProvider = app.ApplicationServices;
-                var chatHub = (IHubContext<ChatHub>)serviceProvider.GetService(typeof(IHubContext<ChatHub>));
-
-                var timer = new System.Timers.Timer(1000);
-                timer.Enabled = true;
-                timer.Elapsed += delegate (object sender, System.Timers.ElapsedEventArgs e) {
-                    chatHub.Clients.All.SendAsync("setTime", DateTime.Now.ToString("dddd d MMMM yyyy HH:mm:ss"));
-                };
-                timer.Start();
             });
         }
     }

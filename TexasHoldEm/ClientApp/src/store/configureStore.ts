@@ -1,13 +1,15 @@
-import { applyMiddleware, combineReducers, compose, createStore } from 'redux';
+import { applyMiddleware, combineReducers, compose, createStore, Store } from 'redux';
 import thunk from 'redux-thunk';
 import { connectRouter, routerMiddleware } from 'connected-react-router';
 import { History } from 'history';
 import { ApplicationState, reducers } from './';
+import * as signalR from "@microsoft/signalr";
 
 export default function configureStore(history: History, initialState?: ApplicationState) {
     const middleware = [
         thunk,
-        routerMiddleware(history)
+        routerMiddleware(history),
+        signalRInvokeMiddleware
     ];
 
     const rootReducer = combineReducers({
@@ -26,4 +28,40 @@ export default function configureStore(history: History, initialState?: Applicat
         initialState,
         compose(applyMiddleware(...middleware), ...enhancers)
     );
+}
+
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("http://localhost:5000/poker")
+    .configureLogging(signalR.LogLevel.Information)
+    .withAutomaticReconnect()
+    .build();
+
+export function signalRInvokeMiddleware(store: any) {
+    return (next: any) => async (action: any) => {
+        switch (action.type) {
+            case "SIGNALR_INCREMENT_COUNT":
+                connection.invoke('IncrementCounter');
+                break;
+            case "SIGNALR_DECREMENT_COUNT":
+                connection.invoke('DecrementCounter');
+                break;
+        }
+
+        return next(action);
+    }
+}
+
+export function signalRRegisterCommands(store: any, callback: Function) {
+
+    connection.on('IncrementCounter', data => {
+        store.dispatch({ type: 'INCREMENT_COUNT' })
+        console.log("Count has been incremented");
+    })
+
+    connection.on('DecrementCounter', data => {
+        store.dispatch({ type: 'DECREMENT_COUNT' })
+        console.log("Count has been decremented");
+    })
+
+    connection.start().then(callback());
 }

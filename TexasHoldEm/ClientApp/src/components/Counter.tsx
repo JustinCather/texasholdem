@@ -24,6 +24,11 @@ class Counter extends React.PureComponent<CounterProps> {
                     onClick={() => { this.props.increment(); }}>
                     Increment
                 </button>
+                <button type="button"
+                    className="btn btn-primary btn-lg"
+                    onClick={() => { this.props.decrement(); }}>
+                    Decrement
+                </button>
             </React.Fragment>
         );
     }
@@ -32,4 +37,4 @@ class Counter extends React.PureComponent<CounterProps> {
 export default connect(
     (state: ApplicationState) => state.counter,
     CounterStore.actionCreators
-)(Counter);
+)(Counter as any);
