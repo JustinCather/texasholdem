@@ -50,8 +50,9 @@ namespace TexasHoldEm.Hubs
             if (g.AddPlayer(name, out var player))
             {
                 await EnsureIdLinked(player, game);
-                await Clients.Group(game).SendAsync("newPlayerJoined", game, name, g.Players.Select(x => x.Name).ToArray());
             }
+
+            await Clients.Group(game).SendAsync("newPlayerJoined", game, name, g.Players.Select(x => x.Name).ToArray());
         }
 
         public async Task StartGame(string game)
@@ -76,12 +77,15 @@ namespace TexasHoldEm.Hubs
 
             await EnsureIdLinked(user, game);
 
-            g.Bet(user, bet, out var waitingOn);
-
-            if (waitingOn != null)
+            if (g.Bet(user, bet, out var waitingOn))
             {
                 await MessagePlayer(waitingOn, "playersBet");
                 await Clients.Group(game).SendAsync("waitingForPlayerToBet", waitingOn.Name);
+            }
+            else
+            {
+                var cards = g.GetTableCards();
+                await Clients.Group(game).SendAsync("tableCardsChanged", cards);
             }
         }
     }

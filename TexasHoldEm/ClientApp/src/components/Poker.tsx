@@ -74,7 +74,7 @@ class Poker extends React.PureComponent<PokerProps> {
             <button type="button"
                 className="btn btn-primary btn-lg"
                 onClick={() => { this.props.startGame(); }}>
-                Increment
+                Start Game
             </button>
         );
     }

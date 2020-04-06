@@ -7,7 +7,7 @@ namespace TexasHoldEm.Game
 {
     public enum Suite
     {
-        Heats,
+        Hearts,
         Diamonds,
         Clubs,
         Spades
