@@ -40,12 +40,6 @@ const connection = new signalR.HubConnectionBuilder()
 export function signalRInvokeMiddleware(store: any) {
     return (next: any) => async (action: any) => {
         switch (action.type) {
-            case "SIGNALR_INCREMENT_COUNT":
-                connection.invoke('IncrementCounter');
-                break;
-            case "SIGNALR_DECREMENT_COUNT":
-                connection.invoke('DecrementCounter');
-                break;
             case "ADD_PLAYER":
                 connection.invoke("AddPlayer", action.game, action.name)
                 break;
@@ -60,16 +54,6 @@ export function signalRInvokeMiddleware(store: any) {
 
 export function signalRRegisterCommands(store: any) {
 
-    connection.on('IncrementCounter', data => {
-        store.dispatch({ type: 'INCREMENT_COUNT' })
-        console.log("Count has been incremented");
-    })
-
-    connection.on('DecrementCounter', data => {
-        store.dispatch({ type: 'DECREMENT_COUNT' })
-        console.log("Count has been decremented");
-    })
-
     connection.on('newPlayerJoined', (game, added, players) => {
         store.dispatch({type: 'PLAYER_ADDED', name: added, players: players});
         console.log("A new player has been added");
@@ -80,7 +64,6 @@ export function signalRRegisterCommands(store: any) {
         console.log("The game has started");
     });
 
-    //(c1Suite,  c1Value, c2Suite, c2Value)
     connection.on('playerBeingDealt', (first, second) => {
         const cards = [first, second];
 

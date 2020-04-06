@@ -4,16 +4,38 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TexasHoldEm.Game;
 
 namespace TexasHoldEm.Hubs
 {
     public class PokerHub : Hub
     {
-        private Game.GameProvider gameProvider;
+        private GameProvider gameProvider;
 
-        public PokerHub(Game.GameProvider gameProvider)
+        public PokerHub(GameProvider gameProvider)
         {
             this.gameProvider = gameProvider;
+        }
+
+        private async Task EnsureIdLinked(Player player, string game)
+        {
+            player.ConnectionIds.Add(Context.ConnectionId);
+            await Groups.AddToGroupAsync(Context.ConnectionId, game);
+        }
+
+        private async Task MessagePlayer(Player player, string method, params object[] args)
+        {
+            foreach (var c in player.ConnectionIds)
+            {
+                if (args != null && args.Length > 0)
+                {
+                    await Clients.Client(c).SendAsync(method, args);
+                }
+                else
+                {
+                    await Clients.Client(c).SendAsync(method);
+                }
+            }
         }
 
         public async Task AddPlayer(string game, string name)
@@ -22,12 +44,12 @@ namespace TexasHoldEm.Hubs
             {
                 gameProvider.Games[game] = new Game.Game();
             }
+
             var g = gameProvider.Games[game];
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, game);
-
-            if (g.AddPlayer(name, Context.ConnectionId))
-            {   
+            if (g.AddPlayer(name, out var player))
+            {
+                await EnsureIdLinked(player, game);
                 await Clients.Group(game).SendAsync("newPlayerJoined", game, name, g.Players.Select(x => x.Name).ToArray());
             }
         }
@@ -35,32 +57,32 @@ namespace TexasHoldEm.Hubs
         public async Task StartGame(string game)
         {
             var g = gameProvider.Games[game];
-
-            g.Start();
+            var waitingOn = g.Start();
 
             foreach (var p in g.Players)
             {
-                foreach (var c in p.ConnectionIds)
-                {
-                    await Clients.Client(c).SendAsync("playerBeingDealt", p.Hand[0].ToString(), p.Hand[1].ToString());
-                }
+                await MessagePlayer(p, "playerBeingDealt", p.Hand[0].ToString(), p.Hand[1].ToString());
             }
 
             await Clients.Group(game).SendAsync("gameStarted");
+            await MessagePlayer(waitingOn, "playersBet");
+            await Clients.Group(game).SendAsync("waitingForPlayerToBet", waitingOn.Name);
         }
 
-        public async Task IncrementCounter()
+        public async Task Bet(string game, string name, int bet)
         {
-            List<String> ConnectionIDToIgnore = new List<String>();
-            ConnectionIDToIgnore.Add(Context.ConnectionId);
-            await Clients.AllExcept(ConnectionIDToIgnore).SendAsync("IncrementCounter");
-        }
+            var g = gameProvider.Games[game];
+            var user = g.GetPlayer(name);
 
-        public async Task DecrementCounter()
-        {
-            List<String> ConnectionIDToIgnore = new List<String>();
-            ConnectionIDToIgnore.Add(Context.ConnectionId);
-            await Clients.AllExcept(ConnectionIDToIgnore).SendAsync("DecrementCounter");
+            await EnsureIdLinked(user, game);
+
+            g.Bet(user, bet, out var waitingOn);
+
+            if (waitingOn != null)
+            {
+                await MessagePlayer(waitingOn, "playersBet");
+                await Clients.Group(game).SendAsync("waitingForPlayerToBet", waitingOn.Name);
+            }
         }
     }
 }

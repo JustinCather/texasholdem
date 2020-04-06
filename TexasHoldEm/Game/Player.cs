@@ -14,7 +14,9 @@ namespace TexasHoldEm.Game
 
         public ConcurrentBag<string> ConnectionIds { get; } = new ConcurrentBag<string>();
         public string Name { get; set; } = string.Empty;
+        public int Position { get; set; } = 0;
         public int Chips { get; set; } = 0;
+        public int CurrentBet { get; set; } = 0;
         public Card[] Hand { get; } = new Card[2];
     }
 }

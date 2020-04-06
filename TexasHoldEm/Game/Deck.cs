@@ -8,20 +8,22 @@ namespace TexasHoldEm.Game
     public class Deck
     {
         private static readonly Random rand = new Random(42);
+        public const int CardsInDeck = 52;
 
-        public List<Card> Cards { get; private set; } = GetCards();
+        public Stack<Card> Cards { get; private set; } = GetCards();
 
-        public Card this[int i] => Cards[i];
+        public Card Next() => Cards.Pop();
 
-        private static List<Card> GetCards()
+        private static Stack<Card> GetCards()
         {
-            var deck = new List<Card>();
+            var deckList = new List<Card>(CardsInDeck);
+            var deck = new Stack<Card>(CardsInDeck);
 
             foreach (var suite in Enum.GetValues(typeof(Suite)).Cast<Suite>())
             {
                 foreach (var value in Enum.GetValues(typeof(CardValue)).Cast<CardValue>())
                 {
-                    deck.Add(new Card()
+                    deckList.Add(new Card()
                     {
                         Suite = suite,
                         CardValue = value
@@ -31,8 +33,13 @@ namespace TexasHoldEm.Game
 
             lock(rand)
             {
-                return deck.OrderBy(x => rand.Next()).ToList();
+                foreach (var c in deckList.OrderBy(x => rand.Next()))
+                {
+                    deck.Push(c);
+                }
             }
+
+            return deck;
         }
 
     }
