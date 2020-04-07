@@ -79,6 +79,11 @@ namespace TexasHoldEm.Game
                 Table[4] = Deck.Next();
                 State = State.GameOver;
             }
+            else
+            {
+                // Game over.
+                //todo: win conditions.
+            }
         }
 
         public Player GetPlayer(string name)
