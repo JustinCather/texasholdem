@@ -21,7 +21,7 @@ namespace TexasHoldEm.Services
                 PotSize = game.PotSize,
                 SmallBlindAmount = 25, //todo
                 BigBlindAmount = 50, //todo
-                CommunityCards = new List<Card>(game.Table.Select(x => new Card(x.Suite, x.CardValue))),
+                CommunityCards = new List<Card>(game.Table.Where(x => x != null).Select(x => new Card(x.Suite, x.CardValue))),
                 Seats = new List<Seat>(12)
             };
 
@@ -38,7 +38,7 @@ namespace TexasHoldEm.Services
                         CurrentBet = p.CurrentBet,
                         Folded = p.Folded,
                         PlayersTurn = p == game.Current,
-                        AllIn = p.CurrentBet == p.Chips,
+                        AllIn = false, //todo
                         IsYou = false,
                         IsDealer = p == game.Dealer,
                         //Cards = p.Hand.Select(x => new PlayingCard(x.Suite, x.CardValue)).ToArray()
