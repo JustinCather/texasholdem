@@ -5,9 +5,9 @@ VisualStudioVersion = 16.0.29728.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TexasHoldEm", "TexasHoldEm\TexasHoldEm.csproj", "{5C6FE6F3-B6D3-4086-A3BC-4076A2FA87BB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TexasHoldEm.Test", "TexasHoldEmTest\TexasHoldEm.Test.csproj", "{E161E001-DF1C-4AB1-AA2B-B89627943361}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TexasHoldEm.Test", "TexasHoldEm.Test\TexasHoldEm.Test.csproj", "{E161E001-DF1C-4AB1-AA2B-B89627943361}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TexasHoldEm.Library", "Poker\TexasHoldEm.Library.csproj", "{B77C8F98-F5FC-47AA-AD29-A772A495389C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TexasHoldEm.Library", "TexasHoldEm.Library\TexasHoldEm.Library.csproj", "{B77C8F98-F5FC-47AA-AD29-A772A495389C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
