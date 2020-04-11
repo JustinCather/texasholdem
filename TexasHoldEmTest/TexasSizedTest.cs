@@ -1,9 +1,9 @@
 using System;
-using TexasHoldEm.Game;
+using TexasHoldEm.Library;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace TexasHoldEmTest
+namespace TexasHoldEm.Test
 {
     public class TexasSizedTest
     {
@@ -29,15 +29,18 @@ namespace TexasHoldEmTest
             Assert.Equal(p3, game.GetPlayer("c"));
             Assert.Equal(p4, game.GetPlayer("d"));
 
-            var np = game.Start();
-            Assert.Equal(p4, np);
+            game.Start();
 
-            Assert.Throws<Exception>(() => game.Bet(p1, 100, out var t1));
-            Assert.Throws<ArgumentException>(() => game.Bet(np, int.MaxValue, out var t1));
+            int i = 0;
+            int bet = game.MinBet;
+            Assert.Equal(50, game.MinBet);
 
-            while (game.Bet(np, 50, out np))
+            while (game.Bet(game.Current, bet - game.Current.CurrentBet))
             {
-                log.WriteLine("next play to bet " + np.Name);
+                i++;
+                if (i == 3) Assert.Equal(100, game.MinBet);
+                if (i > 3) Assert.Equal(200, game.MinBet);
+                if (i == 2 || i == 3) bet = game.MinBet * 2;
             }
         }
     }
