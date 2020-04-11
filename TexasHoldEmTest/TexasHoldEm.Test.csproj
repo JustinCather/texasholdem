@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TexasHoldEm\TexasHoldEm.csproj" />
+    <ProjectReference Include="..\Poker\TexasHoldEm.Library.csproj" />
   </ItemGroup>
 
 </Project>

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace TexasHoldEm.Game
+namespace TexasHoldEm.Library
 {
     public enum Suite
     {

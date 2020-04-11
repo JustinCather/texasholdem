@@ -4,88 +4,85 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using TexasHoldEm.Game;
+using TexasHoldEm.Models;
+using TexasHoldEm.Services;
 
 namespace TexasHoldEm.Hubs
 {
     public class PokerHub : Hub
     {
         private GameProvider gameProvider;
+        private UserProvider userProvider;
 
-        public PokerHub(GameProvider gameProvider)
+        public PokerHub(GameProvider gameProvider, UserProvider userProvider)
         {
             this.gameProvider = gameProvider;
+            this.userProvider = userProvider;
         }
 
-        private async Task EnsureIdLinked(Player player, string game)
+        private async Task SendGameState(GameState state)
         {
-            player.ConnectionIds.Add(Context.ConnectionId);
-            await Groups.AddToGroupAsync(Context.ConnectionId, game);
-        }
+            var users = state.Seats
+                .Where(x => x.SeatTaken)
+                .Select(x => x.Player)
+                .ToDictionary(x => x.Name, y => y);
 
-        private async Task MessagePlayer(Player player, string method, params object[] args)
-        {
-            foreach (var c in player.ConnectionIds)
+            foreach (var userAndIds in userProvider.GetUsersAndIds(users.Keys))
             {
-                if (args != null && args.Length > 0)
+                var user = users[userAndIds.user];
+
+                try
                 {
-                    await Clients.Client(c).SendAsync(method, args);
+                    user.Cards = gameProvider.GetPlayerCards(state.Name, user.Name);
+                    user.IsYou = true;
+
+                    foreach (var id in userAndIds.ids)
+                    {
+                        await Clients.Client(id).SendAsync("signalrGameStateUpdate", state);
+                    }
                 }
-                else
+                finally
                 {
-                    await Clients.Client(c).SendAsync(method);
+                    user.Cards = null;
+                    user.IsYou = false;
                 }
             }
         }
 
-        public async Task AddPlayer(string game, string name)
+        public async Task TakeAction(PlayerAction action)
         {
-            if (!gameProvider.Games.ContainsKey(game))
+            GameState state = null;
+
+            if (string.IsNullOrEmpty(action.GameName))
             {
-                gameProvider.Games[game] = new Game.Game();
+                throw new HubException($"{nameof(action.GameName)} must be provided");
             }
 
-            var g = gameProvider.Games[game];
-
-            if (g.AddPlayer(name, out var player))
+            if (string.IsNullOrEmpty(action.PlayerName))
             {
-                await EnsureIdLinked(player, game);
+                throw new HubException($"{nameof(action.PlayerName)} must be provided");
             }
 
-            await Clients.Group(game).SendAsync("newPlayerJoined", game, name, g.Players.Select(x => x.Name).ToArray());
-        }
+            userProvider.AddConnection(action.PlayerName, Context.ConnectionId);
 
-        public async Task StartGame(string game)
-        {
-            var g = gameProvider.Games[game];
-            var waitingOn = g.Start();
-
-            foreach (var p in g.Players)
+            switch (action.Action)
             {
-                await MessagePlayer(p, "playerBeingDealt", p.Hand[0].ToString(), p.Hand[1].ToString());
+                case PlayerAction.ActionType.Add:
+                    state = gameProvider.AddPlayer(action.GameName, action.PlayerName);
+                    break;
+                case PlayerAction.ActionType.Start:
+                    state = gameProvider.StartGame(action.GameName);
+                    break;
+                case PlayerAction.ActionType.Bet:
+                    state = gameProvider.Bet(action.GameName, action.PlayerName, action.Wager);
+                    break;
+                default:
+                    break;
             }
 
-            await Clients.Group(game).SendAsync("gameStarted");
-            await MessagePlayer(waitingOn, "playersBet");
-            await Clients.Group(game).SendAsync("waitingForPlayerToBet", waitingOn.Name);
-        }
-
-        public async Task Bet(string game, string name, int bet)
-        {
-            var g = gameProvider.Games[game];
-            var user = g.GetPlayer(name);
-
-            await EnsureIdLinked(user, game);
-
-            if (g.Bet(user, bet, out var waitingOn))
+            if (state != null)
             {
-                await MessagePlayer(waitingOn, "playersBet");
-                await Clients.Group(game).SendAsync("waitingForPlayerToBet", waitingOn.Name);
-            }
-            else
-            {
-                var cards = g.GetTableCards();
-                await Clients.Group(game).SendAsync("tableCardsChanged", cards);
+                await SendGameState(state);
             }
         }
     }

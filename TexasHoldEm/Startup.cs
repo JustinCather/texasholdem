@@ -32,7 +32,8 @@ namespace TexasHoldEm
                 configuration.RootPath = "ClientApp/build";
             });
             services.AddSignalR();
-            services.AddSingleton<Game.GameProvider>();
+            services.AddSingleton<Services.GameProvider>();
+            services.AddSingleton<Services.UserProvider>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
