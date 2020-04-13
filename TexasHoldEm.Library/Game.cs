@@ -20,22 +20,20 @@ namespace TexasHoldEm.Library
         public const int CardsInDeck = 52;
 
 
-        private int DealerIndex { get; set; } = -1;
-        public int BetStartsAt { get; set; } = -1;
-        private Queue<Player> BetQueue { get; } = new Queue<Player>();
+        private LinkedList<Player> BetQueue { get; } = new LinkedList<Player>();
         private Dictionary<string, Player> PlayerLookup { get; } = new Dictionary<string, Player>();
         private Stack<Card> Deck { get; set; } = null;
 
-        public int PotSize { get; set; } = 0;
-        public int MinBet { get; set; } = 0;
-        public string Name { get; set; } = string.Empty;
-        public int PlayerCount => Players?.Count ?? 0;
+        public int PotSize { get; private set; } = 0;
+        public int MinBet { get; private set; } = 0;
+        public string Name { get; private set; } = string.Empty;
+        public int PlayerCount => Players.Count;
         public Card[] Table { get; } = new Card[5];
         public State State { get; private set; } = State.Flop;
         public Player Dealer { get; private set; }
         public Player BigBlind { get; private set; }
         public Player LittleBlind { get; private set; }
-        public Player Current => BetQueue.Count > 0 ? BetQueue.Peek() : null;
+        public Player Current => BetQueue.First?.Value;
         public List<Player> Players { get; } = new List<Player>();
         public bool WaitingForBets { get; private set; } = false;
         public string PeekBetQueue => string.Join("=>", BetQueue.ToArray().Select(x => x.Name));
@@ -68,21 +66,57 @@ namespace TexasHoldEm.Library
             return deck;
         }
 
-        private int PlayerAfter(int index) => (index + 1) % PlayerCount;
-
         private Card NextCardInDeck() => Deck.Pop();
 
-        private void Deal()
+        private Player PlayerAfter(int index) => Players[(index + 1) % PlayerCount];
+
+        private Player PlayerAfterRecursive(Player player)
         {
-            int first = PlayerAfter(DealerIndex);
-            int next = first;
+            return PlayerAfterRecursive(player.Position, player.Position);
+        }
+
+        private Player PlayerAfterRecursive(int startIndex, int index)
+        {
+            var player = PlayerAfter(index);
+
+            if (player.Position == startIndex || (!player.Folded && player.Chips > 0))
+            {
+                return player;
+            }
+
+            return PlayerAfterRecursive(startIndex, index + 1);
+        }
+
+        private Player GetPlayer(string name)
+        {
+            return PlayerLookup[name];
+        }
+
+        private void VerifyIsPlayersTurn(Player player)
+        {
+            if (BetQueue.Count == 0)
+            {
+                throw new Exception("No more bets accepted");
+            }
+
+            if (BetQueue.First.Value.Position != player.Position)
+            {
+                throw new Exception($"{player.Name} attempted to bet out of turn");
+            }
+
+            
+        }
+
+        private void Deal(int pos)
+        {
+            var first = PlayerAfterRecursive(Dealer);
+            var next = first;
 
             do
             {
-                Players[next].Hand[0] = NextCardInDeck();
-                Players[next].Hand[1] = NextCardInDeck();
-                next = PlayerAfter(next);
-            } while (next != first);
+                next.Hand[pos] = NextCardInDeck();
+                next = PlayerAfterRecursive(next.Position, next.Position);
+            } while (next.Position != first.Position);
         }
 
         private void AdjustPotPlayerChips(Player player, int wager)
@@ -95,57 +129,78 @@ namespace TexasHoldEm.Library
             {
                 MinBet = player.CurrentBet;
             }
+
+            player.AllIn = player.Chips == 0;
         }
 
         private void NextStage()
         {
-            foreach (var p in Players) p.CurrentBet = 0;
-            MinBet = 0; // Allows checks.
+            //todo: verify enough players to continue play.
 
-            if (State == State.Flop)
+            if (State == State.Start)
             {
                 Table[0] = NextCardInDeck();
                 Table[1] = NextCardInDeck();
                 Table[2] = NextCardInDeck();
-                State = State.Turn;
+                State = State.Flop;
             }
-            else if (State == State.Turn)
+            else if (State == State.Flop)
             {
                 Table[3] = NextCardInDeck();
-                State = State.Flop;
+                State = State.River;
             }
             else if (State == State.River)
             {
                 Table[4] = NextCardInDeck();
-                State = State.GameOver;
+                State = State.Turn;
             }
             else
             {
+                State = State.GameOver;
                 // Game over.
                 //todo: win conditions.
-            }
-        }
 
-        public Player GetPlayer(string name)
-        {
-            return PlayerLookup[name];
-        }
-
-        public Card[] GetTableCards()
-        {
-            return this.Table.Where(x => x != null).ToArray();
-        }
-
-        public bool Bet(Player player, int wager)
-        {
-            if (BetQueue.Count == 0)
-            {
-                throw new Exception("No more bets accepted");
             }
 
-            if (BetQueue.Peek().Position != player.Position)
+            foreach (var p in Players)
             {
-                throw new Exception($"{player.Name} attempted to bet out of turn");
+                p.CurrentBet = 0;
+                p.Folded = false;
+                p.AllIn = false;
+            }
+
+            MinBet = 0; // Allows checks.
+        }
+
+        public IEnumerable<Card> GetTableCards()
+        {
+            return this.Table.Where(x => x != null);
+        }
+
+        public IEnumerable<Card> GetPlayerCards(string name)
+        {
+            return PlayerLookup[name].Hand.Where(x => x != null);
+        }
+
+        public void Fold(string name)
+        {
+            var player = GetPlayer(name);
+            VerifyIsPlayersTurn(player);
+            BetQueue.RemoveFirst();
+            player.Folded = true;
+            player.Hand[0] = null;
+            player.Hand[1] = null;
+        }
+
+        public bool Bet(string name, int wager)
+        {
+            var player = GetPlayer(name);
+
+            VerifyIsPlayersTurn(player);
+
+            if (player.Folded)
+            {
+                throw new Exception($"{player.Name} cannot bet after folding");
             }
 
             if (wager + player.CurrentBet < MinBet)
@@ -159,30 +214,28 @@ namespace TexasHoldEm.Library
             }
 
             // Remove the player from queue.
-            BetQueue.Dequeue();
+            BetQueue.RemoveFirst();
 
             if (wager + player.CurrentBet > MinBet)
             {
                 // Need to requeue other players.
-                var hold = BetQueue.ToArray();
-                var stopAt = player.Position;
-                var startAt = PlayerAfter(stopAt);
+                var startAt = PlayerAfterRecursive(player);
 
-                if (hold.Length > 0)
+                if (BetQueue.Count > 0)
                 {
-                    startAt = hold[hold.Length - 1].Position;
-                    startAt = PlayerAfter(startAt);
+                    startAt = PlayerAfterRecursive(BetQueue.Last.Value);
                 }
 
-                while (startAt != stopAt)
+                while (startAt.Position != player.Position)
                 {
-                    BetQueue.Enqueue(Players[startAt]);
-                    startAt = PlayerAfter(startAt);
+                    BetQueue.AddLast(startAt);
+                    startAt = PlayerAfterRecursive(startAt);
                 }
             }
 
+            // Add the players bet to pot.
             AdjustPotPlayerChips(player, wager);
-            
+
             if (BetQueue.Count == 0)
             {
                 NextStage();
@@ -194,7 +247,7 @@ namespace TexasHoldEm.Library
             }
         }
 
-        public bool AddPlayer(string name, out Player player)
+        public bool AddPlayer(string name)
         {
             if (!PlayerLookup.ContainsKey(name))
             {
@@ -206,12 +259,7 @@ namespace TexasHoldEm.Library
                 };
                 PlayerLookup[name] = newPlayer;
                 Players.Add(newPlayer);
-                player = newPlayer;
                 return true;
-            }
-            else
-            {
-                player = PlayerLookup[name];
             }
 
             return false;
@@ -219,36 +267,43 @@ namespace TexasHoldEm.Library
 
         public void Start()
         {
-            DealerIndex = DealerIndex < 0 ? 0 : PlayerAfter(DealerIndex);
-            int littleBlind = PlayerAfter(DealerIndex);
-            int bigBlind = PlayerAfter(littleBlind);
-            int firstToBet = PlayerAfter(bigBlind);
-            int nextToBet = firstToBet;
-
-            Deck = GetNewDeck();
-            State = State.Flop;
-            PotSize = 0;
-            Dealer = Players[DealerIndex];
-            LittleBlind = Players[littleBlind];
-            BigBlind = Players[bigBlind];
-            WaitingForBets = true;
-            BetStartsAt = littleBlind;
-            
-            while (nextToBet != littleBlind)
+            var enoughPlayers = Players.Where(x => x.Chips > 0).Count() > 1;
+            if (!enoughPlayers)
             {
-                BetQueue.Enqueue(Players[nextToBet]);
-                nextToBet = PlayerAfter(nextToBet);
+                throw new Exception("Not enough players with chips to play");
             }
 
-            BetQueue.Enqueue(LittleBlind); // Need to add him back in since he only betted 25 so far.
+            Dealer = Dealer == null ? Players[0] : PlayerAfterRecursive(Dealer);
+            LittleBlind = PlayerAfterRecursive(Dealer);
+            BigBlind = PlayerAfterRecursive(LittleBlind);
+
+            foreach (var p in Players)
+            {
+                p.AllIn = false;
+                p.Folded = false;
+                p.Hand[0] = null;
+                p.Hand[1] = null;
+            }
 
             for (int i = 0; i < Table.Length; i++) Table[i] = null;
 
+            Deck = GetNewDeck();
+            State = State.Start;
+            PotSize = 0;
+
+            // Add everyone to the bet queue.
+            var nextToBet = PlayerAfterRecursive(BigBlind);
+            while (nextToBet.Position != LittleBlind.Position)
+            {
+                BetQueue.AddLast(nextToBet);
+                nextToBet = PlayerAfterRecursive(nextToBet);
+            }
+            BetQueue.AddLast(LittleBlind); // Need to add him back in since he only betted 25 so far.
+
             AdjustPotPlayerChips(LittleBlind, 25);
             AdjustPotPlayerChips(BigBlind, 50);
-            Deal();
+            Deal(0);
+            Deal(1);
         }
-
-        
     }
 }

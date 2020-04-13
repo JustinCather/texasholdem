@@ -17,6 +17,7 @@ namespace TexasHoldEm.Library
         public int Chips { get; set; } = 0;
         public int CurrentBet { get; set; } = 0;
         public bool Folded { get; set; } = false;
+        public bool AllIn { get; set; } = false;
         public Card[] Hand { get; } = new Card[2];
     }
 }

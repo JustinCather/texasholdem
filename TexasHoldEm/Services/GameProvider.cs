@@ -21,7 +21,7 @@ namespace TexasHoldEm.Services
                 PotSize = game.PotSize,
                 SmallBlindAmount = 25, //todo
                 BigBlindAmount = 50, //todo
-                CommunityCards = new List<Card>(game.Table.Where(x => x != null).Select(x => new Card(x.Suite, x.CardValue))),
+                CommunityCards = new List<Card>(game.GetTableCards().Select(x => new Card(x.Suite, x.CardValue))),
                 Seats = new List<Seat>(12)
             };
 
@@ -38,10 +38,9 @@ namespace TexasHoldEm.Services
                         CurrentBet = p.CurrentBet,
                         Folded = p.Folded,
                         PlayersTurn = p == game.Current,
-                        AllIn = false, //todo
+                        AllIn = p.AllIn,
                         IsYou = false,
                         IsDealer = p == game.Dealer,
-                        //Cards = p.Hand.Select(x => new PlayingCard(x.Suite, x.CardValue)).ToArray()
                     },
                 });
             }
@@ -49,11 +48,10 @@ namespace TexasHoldEm.Services
             return state;
         }
 
-        public IEnumerable<Models.Card> GetPlayerCards(string game, string user)
+        public IEnumerable<Card> GetPlayerCards(string game, string user)
         {
             var instance = Games[game];
-            var player = instance.GetPlayer(user);
-            return player.Hand.Select(x => new Card(x.Suite, x.CardValue));
+            return instance.GetPlayerCards(user).Select(x => new Card(x.Suite, x.CardValue));
         }
 
         public GameState AddPlayer(string game, string name)
@@ -70,7 +68,7 @@ namespace TexasHoldEm.Services
                 instance = Games[game];
             }
 
-            instance.AddPlayer(name, out var player);
+            instance.AddPlayer(name);
 
             return GetState(instance);
         }
@@ -85,10 +83,14 @@ namespace TexasHoldEm.Services
         public GameState Bet(string game, string name, int bet)
         {
             var instance = Games[game];
-            var user = instance.GetPlayer(name);
+            instance.Bet(name, bet);
+            return GetState(instance);
+        }
 
-            instance.Bet(user, bet);
-
+        public GameState Fold(string game, string name)
+        {
+            var instance = Games[game];
+            instance.Fold(name);
             return GetState(instance);
         }
     }

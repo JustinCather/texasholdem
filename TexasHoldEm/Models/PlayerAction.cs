@@ -12,7 +12,8 @@ namespace TexasHoldEm.Models
         {
             Add,
             Start,
-            Bet
+            Bet,
+            Fold,
         }
 
         public ActionType Action { get; set; } = ActionType.Add;
