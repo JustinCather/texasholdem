@@ -50,7 +50,10 @@ namespace TexasHoldEm
                 app.UseHsts();
             }
 
+
             //app.UseHttpsRedirection();
+            app.UseResponseCompression();
+            app.UseResponseCaching();
             app.UseStaticFiles();
             app.UseSpaStaticFiles();
 
