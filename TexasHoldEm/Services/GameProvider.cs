@@ -41,7 +41,6 @@ namespace TexasHoldEm.Services
                         AllIn = p.AllIn,
                         IsYou = false,
                         IsDealer = p == game.Dealer,
-                        //Cards = p.Hand.Select(x => new PlayingCard(x.Suite, x.CardValue)).ToArray()
                     },
                 });
             }
@@ -49,11 +48,10 @@ namespace TexasHoldEm.Services
             return state;
         }
 
-        public IEnumerable<Models.Card> GetPlayerCards(string game, string user)
+        public IEnumerable<Card> GetPlayerCards(string game, string user)
         {
             var instance = Games[game];
-            var player = instance.GetPlayer(user);
-            return player.Hand.Select(x => new Card(x.Suite, x.CardValue));
+            return instance.GetPlayerCards(user).Select(x => new Card(x.Suite, x.CardValue));
         }
 
         public GameState AddPlayer(string game, string name)
@@ -70,7 +68,7 @@ namespace TexasHoldEm.Services
                 instance = Games[game];
             }
 
-            instance.AddPlayer(name, out var player);
+            instance.AddPlayer(name);
 
             return GetState(instance);
         }
@@ -85,20 +83,14 @@ namespace TexasHoldEm.Services
         public GameState Bet(string game, string name, int bet)
         {
             var instance = Games[game];
-            var user = instance.GetPlayer(name);
-
-            instance.Bet(user, bet);
-
+            instance.Bet(name, bet);
             return GetState(instance);
         }
 
         public GameState Fold(string game, string name)
         {
             var instance = Games[game];
-            var user = instance.GetPlayer(name);
-
-            user.Folded = true;
-
+            instance.Fold(name);
             return GetState(instance);
         }
     }
