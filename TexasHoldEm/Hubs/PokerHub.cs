@@ -76,6 +76,9 @@ namespace TexasHoldEm.Hubs
                 case PlayerAction.ActionType.Bet:
                     state = gameProvider.Bet(action.GameName, action.PlayerName, action.Wager);
                     break;
+                case PlayerAction.ActionType.Fold:
+                    state = gameProvider.Fold(action.GameName, action.PlayerName);
+                    break;
                 default:
                     break;
             }

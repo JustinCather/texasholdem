@@ -21,7 +21,7 @@ namespace TexasHoldEm.Services
                 PotSize = game.PotSize,
                 SmallBlindAmount = 25, //todo
                 BigBlindAmount = 50, //todo
-                CommunityCards = new List<Card>(game.Table.Where(x => x != null).Select(x => new Card(x.Suite, x.CardValue))),
+                CommunityCards = new List<Card>(game.GetTableCards().Select(x => new Card(x.Suite, x.CardValue))),
                 Seats = new List<Seat>(12)
             };
 
@@ -38,7 +38,7 @@ namespace TexasHoldEm.Services
                         CurrentBet = p.CurrentBet,
                         Folded = p.Folded,
                         PlayersTurn = p == game.Current,
-                        AllIn = false, //todo
+                        AllIn = p.AllIn,
                         IsYou = false,
                         IsDealer = p == game.Dealer,
                         //Cards = p.Hand.Select(x => new PlayingCard(x.Suite, x.CardValue)).ToArray()
@@ -88,6 +88,16 @@ namespace TexasHoldEm.Services
             var user = instance.GetPlayer(name);
 
             instance.Bet(user, bet);
+
+            return GetState(instance);
+        }
+
+        public GameState Fold(string game, string name)
+        {
+            var instance = Games[game];
+            var user = instance.GetPlayer(name);
+
+            user.Folded = true;
 
             return GetState(instance);
         }

@@ -72,6 +72,23 @@ namespace TexasHoldEm.Library
 
         private Card NextCardInDeck() => Deck.Pop();
 
+        private void ResetGame()
+        {
+            foreach (var p in Players)
+            {
+                p.AllIn = false;
+                p.Folded = false;
+                p.Hand[0] = null;
+                p.Hand[1] = null;
+            }
+
+            for (int i = 0; i < Table.Length; i++) Table[i] = null;
+
+            Deck = GetNewDeck();
+            State = State.Flop;
+            PotSize = 0;
+        }
+
         private void Deal()
         {
             int first = PlayerAfter(DealerIndex);
@@ -95,6 +112,8 @@ namespace TexasHoldEm.Library
             {
                 MinBet = player.CurrentBet;
             }
+
+            player.AllIn = player.Chips == 0;
         }
 
         private void NextStage()
@@ -123,6 +142,7 @@ namespace TexasHoldEm.Library
             {
                 // Game over.
                 //todo: win conditions.
+
             }
         }
 
@@ -131,9 +151,9 @@ namespace TexasHoldEm.Library
             return PlayerLookup[name];
         }
 
-        public Card[] GetTableCards()
+        public IEnumerable<Card> GetTableCards()
         {
-            return this.Table.Where(x => x != null).ToArray();
+            return this.Table.Where(x => x != null);
         }
 
         public bool Bet(Player player, int wager)
@@ -146,6 +166,11 @@ namespace TexasHoldEm.Library
             if (BetQueue.Peek().Position != player.Position)
             {
                 throw new Exception($"{player.Name} attempted to bet out of turn");
+            }
+
+            if (player.Folded)
+            {
+                throw new Exception($"{player.Name} cannot bet after folding");
             }
 
             if (wager + player.CurrentBet < MinBet)
@@ -176,7 +201,11 @@ namespace TexasHoldEm.Library
 
                 while (startAt != stopAt)
                 {
-                    BetQueue.Enqueue(Players[startAt]);
+                    if (!Players[startAt].Folded)
+                    {
+                        BetQueue.Enqueue(Players[startAt]);
+                    }
+                    
                     startAt = PlayerAfter(startAt);
                 }
             }
@@ -225,13 +254,11 @@ namespace TexasHoldEm.Library
             int firstToBet = PlayerAfter(bigBlind);
             int nextToBet = firstToBet;
 
-            Deck = GetNewDeck();
-            State = State.Flop;
-            PotSize = 0;
+            ResetGame();
+         
             Dealer = Players[DealerIndex];
             LittleBlind = Players[littleBlind];
             BigBlind = Players[bigBlind];
-            WaitingForBets = true;
             BetStartsAt = littleBlind;
             
             while (nextToBet != littleBlind)
@@ -239,10 +266,7 @@ namespace TexasHoldEm.Library
                 BetQueue.Enqueue(Players[nextToBet]);
                 nextToBet = PlayerAfter(nextToBet);
             }
-
             BetQueue.Enqueue(LittleBlind); // Need to add him back in since he only betted 25 so far.
-
-            for (int i = 0; i < Table.Length; i++) Table[i] = null;
 
             AdjustPotPlayerChips(LittleBlind, 25);
             AdjustPotPlayerChips(BigBlind, 50);
