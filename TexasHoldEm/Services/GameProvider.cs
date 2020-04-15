@@ -21,7 +21,7 @@ namespace TexasHoldEm.Services
                 PotSize = game.PotSize,
                 SmallBlindAmount = 25, //todo
                 BigBlindAmount = 50, //todo
-                CommunityCards = new List<Card>(game.GetTableCards().Select(x => new Card(x.Suite, x.CardValue))),
+                CommunityCards = new List<Card>(game.GetTableCards().Select(x => new Card(x.Suite, x.Value))),
                 Seats = new List<Seat>(12)
             };
 
@@ -51,7 +51,7 @@ namespace TexasHoldEm.Services
         public IEnumerable<Card> GetPlayerCards(string game, string user)
         {
             var instance = Games[game];
-            return instance.GetPlayerCards(user).Select(x => new Card(x.Suite, x.CardValue));
+            return instance.GetPlayerCards(user).Select(x => new Card(x.Suite, x.Value));
         }
 
         public GameState AddPlayer(string game, string name)

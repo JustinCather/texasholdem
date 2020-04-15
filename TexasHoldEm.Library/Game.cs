@@ -50,7 +50,7 @@ namespace TexasHoldEm.Library
                     deckList.Add(new Card()
                     {
                         Suite = suite,
-                        CardValue = value
+                        Value = value
                     });
                 }
             }
@@ -131,6 +131,83 @@ namespace TexasHoldEm.Library
             }
 
             player.AllIn = player.Chips == 0;
+        }
+
+        private bool GetIsStraight(Card[] hand)
+        {
+            for (int i = 1; i < hand.Length; i++)
+            {
+                if ((hand[i - 1].Value != CardValue.King && hand[i].Value != CardValue.Ace) && 
+                    (hand[i - 1].Value + 1 != hand[i].Value))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public int HandResult(params Card[] hand)
+        {
+            const int max = 126;
+            const int range = (int)CardValue.King + 2; // ace 13
+            int highCard = -1;
+            bool isStraight;
+
+            // Sort it.
+            Array.Sort(hand, (x, y) => x.Value.CompareTo(y.Value));
+
+            //Check if this is a straight.
+            isStraight = GetIsStraight(hand);
+
+            // Handle the high/low ace condition.
+            if (!isStraight && hand[0].Value == CardValue.Ace)
+            {
+                // If this is not a straight and first card is anace, then move it to the end to be counted as high card.
+                do
+                {
+                    var temp = hand[0];
+                    for (int i = 1; i < hand.Length; i++)
+                    {
+                        hand[i - 1] = hand[i];
+                    }
+                    hand[^1] = temp;
+                } while (hand[0].Value == CardValue.Ace);
+
+
+                highCard = 13;
+
+                // Recheck is staight for a high straight case.
+                isStraight = GetIsStraight(hand);
+            }
+
+            var allSameSuite = hand.GroupBy(x => x.Suite).Count() == 1;                     
+            var highStraight = isStraight && hand[^1].Value == CardValue.Ace;
+            var bestCardValues = hand.GroupBy(x => x.Value).Select(x => x.Count()).OrderByDescending(x => x).ToArray();
+            var firstValueCount = bestCardValues.Length > 0 ? bestCardValues[0] : 0;
+            var secondValueCunt = bestCardValues.Length > 1 ? bestCardValues[1] : 0;
+
+            if (highCard == -1)
+            {
+                highCard = (int)hand.Max(x => x.Value);
+            }
+
+            //todo: best of five...not quite right
+            var result = (allSameSuite, highStraight, isStraight, firstValueCount, secondValueCunt) switch
+            {
+                (true, true, _, _, _)  => max,                              // Royal flush
+                (true, _, true, _, _)  => ((max - (range * 1)) + highCard), // Straight flush 
+                (_, _, _, 4, _)        => ((max - (range * 2)) + highCard), // Four of a kind
+                (_, _, _, 3, 2)        => ((max - (range * 3)) + highCard), // full house
+                (true, _, _, _, _)     => ((max - (range * 4)) + highCard), // Flush
+                (_, _, true, _, _)     => ((max - (range * 5)) + highCard), // Straight
+                (_, _, _, 3, _)        => ((max - (range * 6)) + highCard), // Three of a kind
+                (_, _, _, 2, 2)        => ((max - (range * 7)) + highCard), // Two pair
+                (_, _, _, 1, _)        => ((max - (range * 8)) + highCard), // One pair    
+                _                      => ((max - (range * 9)) + highCard)  // High card
+            };
+
+            return result;
         }
 
         private void NextStage()
