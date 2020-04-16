@@ -32,8 +32,15 @@ namespace TexasHoldEm.Library
 
     public class Card
     {
+        public Card() { }
+        public Card(Suite suite, CardValue value)
+        {
+            this.Suite = suite;
+            this.Value = value;
+        }
+
         public Suite Suite { get; set; }
-        public CardValue CardValue { get; set; }
-        public override string ToString() => $"{CardValue.ToString()} of {Suite.ToString()}";
+        public CardValue Value { get; set; }
+        public override string ToString() => $"{Value} of {Suite}";
     }
 }
