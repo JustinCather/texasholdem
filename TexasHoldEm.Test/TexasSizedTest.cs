@@ -22,7 +22,7 @@ namespace TexasHoldEm.Test
             {
                 yield return new object[] // royal flush
                 {
-                    126,
+                    HandType.RoyalFlush,
                     new Card[]
                     {
                         new Card(Suite.Hearts, CardValue.Ten),
@@ -34,7 +34,7 @@ namespace TexasHoldEm.Test
                 };
                 yield return new object[] // straight flush (six)
                 {
-                    117,
+                    HandType.StraightFlush,
                     new Card[]
                     {
                         new Card(Suite.Clubs, CardValue.Six),
@@ -46,7 +46,7 @@ namespace TexasHoldEm.Test
                 };
                 yield return new object[] // straight flush (ace)
                 {
-                    116,
+                    HandType.StraightFlush,
                     new Card[]
                     {
                         new Card(Suite.Clubs, CardValue.Ace),
@@ -58,7 +58,7 @@ namespace TexasHoldEm.Test
                 };
                 yield return new object[] // four of a kind (jack)
                 {
-                    108,
+                    HandType.FourOfAKind,
                     new Card[]
                     {
                         new Card(Suite.Hearts, CardValue.Jack),
@@ -70,7 +70,7 @@ namespace TexasHoldEm.Test
                 };
                 yield return new object[] // full house (king)
                 {
-                    96,
+                    HandType.FullHouse,
                     new Card[]
                     {
                         new Card(Suite.Hearts, CardValue.King),
@@ -82,7 +82,7 @@ namespace TexasHoldEm.Test
                 };
                 yield return new object[] // flush (king)
                 {
-                    82,
+                    HandType.Flush,
                     new Card[]
                     {
                         new Card(Suite.Diamonds, CardValue.Six),
@@ -94,7 +94,7 @@ namespace TexasHoldEm.Test
                 };
                 yield return new object[] // straight (five)
                 {
-                    60,
+                    HandType.Straight,
                     new Card[]
                     {
                         new Card(Suite.Diamonds, CardValue.Four),
@@ -106,7 +106,7 @@ namespace TexasHoldEm.Test
                 };
                 yield return new object[] // three of a kind (four)
                 {
-                    45,
+                    HandType.ThreeOfAKind,
                     new Card[]
                     {
                         new Card(Suite.Diamonds, CardValue.Four),
@@ -118,7 +118,7 @@ namespace TexasHoldEm.Test
                 };
                 yield return new object[] // two pair (king)
                 {
-                    40,
+                    HandType.TwoPair,
                     new Card[]
                     {
                         new Card(Suite.Diamonds, CardValue.King),
@@ -130,7 +130,7 @@ namespace TexasHoldEm.Test
                 };
                 yield return new object[] // one pair (six)
                 {
-                    19,
+                    HandType.OnePair,
                     new Card[]
                     {
                         new Card(Suite.Diamonds, CardValue.Ace),
@@ -142,7 +142,7 @@ namespace TexasHoldEm.Test
                 };
                 yield return new object[] // high card (eight)
                 {
-                    7,
+                    HandType.HighCard,
                     new Card[]
                     {
                         new Card(Suite.Diamonds, CardValue.Two),
@@ -154,7 +154,7 @@ namespace TexasHoldEm.Test
                 };
                 yield return new object[] // high card (ace)
                 {
-                    13,
+                    HandType.HighCard,
                     new Card[]
                     {
                         new Card(Suite.Diamonds, CardValue.Two),
@@ -172,11 +172,11 @@ namespace TexasHoldEm.Test
 
         [Theory]
         [ClassData(typeof(HandTestData))]
-        public void TestHand(int value, Card[] hand)
+        public void TestHand(HandType handType, Card[] hand)
         {
             var game = new Game();
-            var result = game.HandResult(hand);
-            Assert.Equal(value, result);
+            var result = game.GetHandResult(hand);
+            Assert.Equal(handType, result.HandType);
         }
 
         [Fact]

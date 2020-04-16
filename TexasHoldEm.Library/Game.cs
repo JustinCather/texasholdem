@@ -14,6 +14,20 @@ namespace TexasHoldEm.Library
         GameOver
     }
 
+    public enum HandType
+    {
+        HighCard,
+        OnePair,
+        TwoPair,
+        ThreeOfAKind,
+        Straight,
+        Flush,
+        FullHouse,
+        FourOfAKind,
+        StraightFlush,
+        RoyalFlush,
+    }
+
     public class Game
     {
         private static readonly Random rand = new Random(42);
@@ -69,6 +83,11 @@ namespace TexasHoldEm.Library
         private Card NextCardInDeck() => Deck.Pop();
 
         private Player PlayerAfter(int index) => Players[(index + 1) % PlayerCount];
+
+        private IEnumerable<Player> GetPlayersStillInGame()
+        {
+            return Players.Where(x => !x.Folded);
+        }
 
         private Player PlayerAfterRecursive(Player player)
         {
@@ -147,11 +166,13 @@ namespace TexasHoldEm.Library
             return true;
         }
 
-        public int HandResult(params Card[] hand)
+        public (HandType HandType, int HandValue) GetHandResult(Player player)
         {
-            const int max = 126;
-            const int range = (int)CardValue.King + 2; // ace 13
-            int highCard = -1;
+            return GetHandResult(player.Hand[0], player.Hand[1], Table[0], Table[1], Table[2]);
+        }
+
+        public (HandType HandType, int HandValue) GetHandResult(params Card[] hand)
+        {
             bool isStraight;
 
             // Sort it.
@@ -174,40 +195,43 @@ namespace TexasHoldEm.Library
                     hand[^1] = temp;
                 } while (hand[0].Value == CardValue.Ace);
 
-
-                highCard = 13;
-
                 // Recheck is staight for a high straight case.
                 isStraight = GetIsStraight(hand);
             }
 
             var allSameSuite = hand.GroupBy(x => x.Suite).Count() == 1;                     
             var highStraight = isStraight && hand[^1].Value == CardValue.Ace;
-            var bestCardValues = hand.GroupBy(x => x.Value).Select(x => x.Count()).OrderByDescending(x => x).ToArray();
-            var firstValueCount = bestCardValues.Length > 0 ? bestCardValues[0] : 0;
-            var secondValueCunt = bestCardValues.Length > 1 ? bestCardValues[1] : 0;
+            var bestCardValues = hand.GroupBy(x => x.Value).Select(x => (x.Key, x.Count())).OrderByDescending(x => x.Item2).Take(2).ToArray();
+            var firstValue = bestCardValues[0];
+            var secondValue = bestCardValues[1];
+            var handValue = 0;
 
-            if (highCard == -1)
+            for (int i = 0; i < hand.Length; i++)
             {
-                highCard = (int)hand.Max(x => x.Value);
+                if (i > 0 && hand[i].Value == CardValue.Ace)
+                {
+                    handValue += (int)CardValue.King + 1;
+                }
+
+                handValue += (int)hand[i].Value;
             }
 
             //todo: best of five...not quite right
-            var result = (allSameSuite, highStraight, isStraight, firstValueCount, secondValueCunt) switch
+            var result = (allSameSuite, highStraight, isStraight, firstValue.Item2, secondValue.Item2) switch
             {
-                (true, true, _, _, _)  => max,                              // Royal flush
-                (true, _, true, _, _)  => ((max - (range * 1)) + highCard), // Straight flush 
-                (_, _, _, 4, _)        => ((max - (range * 2)) + highCard), // Four of a kind
-                (_, _, _, 3, 2)        => ((max - (range * 3)) + highCard), // full house
-                (true, _, _, _, _)     => ((max - (range * 4)) + highCard), // Flush
-                (_, _, true, _, _)     => ((max - (range * 5)) + highCard), // Straight
-                (_, _, _, 3, _)        => ((max - (range * 6)) + highCard), // Three of a kind
-                (_, _, _, 2, 2)        => ((max - (range * 7)) + highCard), // Two pair
-                (_, _, _, 1, _)        => ((max - (range * 8)) + highCard), // One pair    
-                _                      => ((max - (range * 9)) + highCard)  // High card
+                (true, true, _, _, _) => HandType.RoyalFlush,
+                (true, _, true, _, _) => HandType.StraightFlush,
+                (_, _, _, 4, _) => HandType.FourOfAKind,
+                (_, _, _, 3, 2) => HandType.FullHouse,
+                (true, _, _, _, _) => HandType.Flush,
+                (_, _, true, _, _) => HandType.Straight,
+                (_, _, _, 3, _) => HandType.ThreeOfAKind,
+                (_, _, _, 2, 2) => HandType.TwoPair,
+                (_, _, _, 2, _) => HandType.OnePair,
+                _  => HandType.HighCard
             };
 
-            return result;
+            return (result, handValue);
         }
 
         private void NextStage()
@@ -233,10 +257,39 @@ namespace TexasHoldEm.Library
             }
             else
             {
-                State = State.GameOver;
                 // Game over.
-                //todo: win conditions.
+                int share = 0;
+                Player winner = null;
+                (HandType HandType, int HandValue) winningHand = default;
+                var winners = new List<Player>();
 
+                foreach (var p in GetPlayersStillInGame())
+                {
+                    var hand = GetHandResult(p);
+                    if (winner == null || 
+                        hand.HandType > winningHand.HandType || 
+                        (hand.HandType == winningHand.HandType && hand.HandValue > winningHand.HandValue))
+                    {
+                        winners.Clear();
+                        winningHand = hand;
+                        winner = p;
+                        winners.Add(winner);
+                    }
+                    else if (hand.HandType == winningHand.HandType && 
+                             hand.HandValue == winningHand.HandValue)
+                    {
+                        winners.Add(p);
+                    }
+                }
+
+                share = PotSize / winners.Count;
+                foreach (var w in winners)
+                {
+                    w.Chips += share;
+                    PotSize -= share;
+                }
+
+                State = State.GameOver;
             }
 
             foreach (var p in Players)
