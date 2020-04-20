@@ -17,7 +17,6 @@ const history = createBrowserHistory({ basename: baseUrl });
 const store = configureStore(history);
 
 signalRRegisterCommands(store);
-
 ReactDOM.render(
     <Provider store={store}>
         <ConnectedRouter history={history}>

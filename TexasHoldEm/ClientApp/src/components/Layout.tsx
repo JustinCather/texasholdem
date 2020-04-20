@@ -1,12 +1,10 @@
 import * as React from 'react';
 import { Container } from 'reactstrap';
-import NavMenu from './NavMenu';
 
 export default (props: { children?: React.ReactNode }) => (
     <React.Fragment>
-        <NavMenu/>
-        <Container>
+        <div id='container-div' style={{ height: '100vH', backgroundColor: 'darkslategray', position: 'relative' }}>
             {props.children}
-        </Container>
+        </div>
     </React.Fragment>
 );

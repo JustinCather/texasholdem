@@ -25,7 +25,7 @@ namespace TexasHoldEm.Hubs
             var users = state.Seats
                 .Where(x => x.SeatTaken)
                 .Select(x => x.Player)
-                .ToDictionary(x => x.Name, y => y);
+                .ToDictionary(x => x.PlayerName, y => y);
 
             foreach (var userAndIds in userProvider.GetUsersAndIds(users.Keys))
             {
@@ -33,7 +33,7 @@ namespace TexasHoldEm.Hubs
 
                 try
                 {
-                    user.Cards = gameProvider.GetPlayerCards(state.Name, user.Name);
+                    user.Cards = gameProvider.GetPlayerCards(state.Name, user.PlayerName);
                     user.IsYou = true;
 
                     foreach (var id in userAndIds.ids)

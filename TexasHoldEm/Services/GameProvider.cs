@@ -22,18 +22,17 @@ namespace TexasHoldEm.Services
                 SmallBlindAmount = 25, //todo
                 BigBlindAmount = 50, //todo
                 CommunityCards = new List<Card>(game.GetTableCards().Select(x => new Card(x.Suite, x.Value))),
-                Seats = new List<Seat>(12)
             };
 
             foreach (var p in game.Players)
             {
-                state.Seats.Add(new Seat()
+                state.Seats[p.Position] = new Seat()
                 {
                     SeatTaken = true,
                     Player = new PlayerState()
                     {
                         ProfileImage = string.Empty,
-                        Name = p.Name,
+                        PlayerName = p.Name,
                         AvailableMoney = p.Chips,
                         CurrentBet = p.CurrentBet,
                         Folded = p.Folded,
@@ -42,7 +41,17 @@ namespace TexasHoldEm.Services
                         IsYou = false,
                         IsDealer = p == game.Dealer,
                     },
-                });
+                };
+            }
+            for (var i = 0; i < state.Seats.Length; i++)
+            {
+                if (state.Seats[i] == null)
+                {
+                    state.Seats[i] = new Seat()
+                    {
+                        SeatTaken = false
+                    };
+                }
             }
 
             return state;
@@ -60,7 +69,7 @@ namespace TexasHoldEm.Services
 
             if (!Games.ContainsKey(game))
             {
-                instance = new Library.Game();
+                instance = new Library.Game(game);
                 Games[game] = instance;
             }
             else
@@ -80,7 +89,7 @@ namespace TexasHoldEm.Services
             return GetState(instance);
         }
 
-        public GameState Bet(string game, string name, int bet)
+        public GameState Bet(string game, string name, double bet)
         {
             var instance = Games[game];
             instance.Bet(name, bet);

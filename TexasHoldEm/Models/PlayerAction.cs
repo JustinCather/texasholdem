@@ -19,6 +19,6 @@ namespace TexasHoldEm.Models
         public ActionType Action { get; set; } = ActionType.Add;
         public string GameName { get; set; } = string.Empty;
         public string PlayerName { get; set; } = string.Empty;
-        public int Wager { get; set; } = 0;
+        public double Wager { get; set; } = 0;
     }
 }

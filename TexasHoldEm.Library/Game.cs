@@ -30,16 +30,19 @@ namespace TexasHoldEm.Library
 
     public class Game
     {
+        public Game(string gameName)
+        {
+            Name = gameName;
+        }
         private static readonly Random rand = new Random(42);
         public const int CardsInDeck = 52;
-
 
         private LinkedList<Player> BetQueue { get; } = new LinkedList<Player>();
         private Dictionary<string, Player> PlayerLookup { get; } = new Dictionary<string, Player>();
         private Stack<Card> Deck { get; set; } = null;
 
-        public int PotSize { get; private set; } = 0;
-        public int MinBet { get; private set; } = 0;
+        public double PotSize { get; private set; } = 0;
+        public double MinBet { get; private set; } = 0;
         public string Name { get; private set; } = string.Empty;
         public int PlayerCount => Players.Count;
         public Card[] Table { get; } = new Card[5];
@@ -138,7 +141,7 @@ namespace TexasHoldEm.Library
             } while (next.Position != first.Position);
         }
 
-        private void AdjustPotPlayerChips(Player player, int wager)
+        private void AdjustPotPlayerChips(Player player, double wager)
         {
             PotSize += wager;
             player.Chips -= wager;
@@ -258,7 +261,7 @@ namespace TexasHoldEm.Library
             else
             {
                 // Game over.
-                int share = 0;
+                double share = 0;
                 Player winner = null;
                 (HandType HandType, int HandValue) winningHand = default;
                 var winners = new List<Player>();
@@ -322,7 +325,7 @@ namespace TexasHoldEm.Library
             player.Hand[1] = null;
         }
 
-        public bool Bet(string name, int wager)
+        public bool Bet(string name, double wager)
         {
             var player = GetPlayer(name);
 
