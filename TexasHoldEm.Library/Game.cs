@@ -30,10 +30,13 @@ namespace TexasHoldEm.Library
 
     public class Game
     {
-        public Game(string gameName)
+        public Game(string gameName, double buyInAmount, double bigBlindAmount)
         {
             Name = gameName;
+            BuyInAmount = buyInAmount;
+            BigBlindAmount = bigBlindAmount;
         }
+
         private static readonly Random rand = new Random(42);
         public const int CardsInDeck = 52;
 
@@ -44,6 +47,8 @@ namespace TexasHoldEm.Library
         public double PotSize { get; private set; } = 0;
         public double MinBet { get; private set; } = 0;
         public string Name { get; private set; } = string.Empty;
+        public double BigBlindAmount { get; private set; }
+        public double BuyInAmount { get; private set; }
         public int PlayerCount => Players.Count;
         public Card[] Table { get; } = new Card[5];
         public State State { get; private set; } = State.Flop;
@@ -388,7 +393,7 @@ namespace TexasHoldEm.Library
                 {
                     Name = name,
                     Position = Players.Count,
-                    Chips = 1000000 //todo
+                    Chips = BuyInAmount
                 };
                 PlayerLookup[name] = newPlayer;
                 Players.Add(newPlayer);
@@ -433,8 +438,8 @@ namespace TexasHoldEm.Library
             }
             BetQueue.AddLast(LittleBlind); // Need to add him back in since he only betted 25 so far.
 
-            AdjustPotPlayerChips(LittleBlind, 25);
-            AdjustPotPlayerChips(BigBlind, 50);
+            AdjustPotPlayerChips(LittleBlind, BigBlindAmount/2.0);
+            AdjustPotPlayerChips(BigBlind, BigBlindAmount);
             Deal(0);
             Deal(1);
         }

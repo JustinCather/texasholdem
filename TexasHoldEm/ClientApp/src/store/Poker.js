@@ -53,7 +53,8 @@ function BlankState() {
         bigBlindAmount: 0,
         communityCards: [],
         seats: [],
-        joinedGame: false
+        joinedGame: false,
+        errorMessage: ''
     };
 }
 function NewInitState() {
@@ -218,6 +219,9 @@ function NewInitState() {
         ]
     };
 }
+;
+;
+;
 // ----------------
 // ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
 // They don't directly mutate state, but they can have external side-effects (such as loading data).
@@ -234,23 +238,68 @@ exports.actionCreators = {
     gameChange: function (name) { return ({ type: 'GAME_NAME_CHANGED', name: name }); },
     playerChange: function (name) { return ({ type: 'PLAYER_NAME_CHANGED', name: name }); },
     startGame: function () { return function (dispatch, getState) {
+        var _a;
         var state = getState();
-        var poker = state.poker;
+        var poker = (_a = state.poker) === null || _a === void 0 ? void 0 : _a.pokerState;
         var game = poker === undefined ? "" : poker.name;
         dispatch({ type: 'START_GAME', game: game });
+    }; },
+    createGame: function (gameName, buyIn, bigBlind) { return function (dispatch, getState) {
+        dispatch({ type: 'CREATE_GAME', gameName: gameName, buyIn: buyIn, bigBlind: bigBlind });
+    }; },
+    resetCreateGame: function () { return function (dispatch, getState) {
+        dispatch({ type: 'RESET_CREATE_GAME' });
     }; }
 };
 // ----------------
 // REDUCER - For a given state and action, returns the new state. To support time travel, this must not mutate the old state.
 exports.reducer = function (state, incomingAction) {
     var action = incomingAction;
-    console.log('what action did i get');
-    console.log(action);
+    console.log('poker reducer');
+    console.log('currentState');
+    console.log(state);
+    console.log('action type');
+    console.log(action.type);
     switch (action.type) {
         case 'UPDATE_GAME_STATE':
+            var newState = __assign({}, state);
+            newState.pokerState = action.state;
             console.log('new state');
             console.log(action.state);
-            return __assign({}, action.state);
+            return newState;
+        case 'GAME_CREATED':
+            var newState = __assign({}, state);
+            newState.createGameState = {
+                attemptedToCreate: true,
+                success: true
+            };
+            console.log('game created statea');
+            console.log(newState);
+            return newState;
+        case 'GAME_ALREADY_EXISTS':
+            var newState = __assign({}, state);
+            newState.createGameState = {
+                attemptedToCreate: true,
+                success: false
+            };
+            console.log('game created statea');
+            console.log(newState);
+            return newState;
+        case 'RESET_CREATE_GAME':
+            console.log('resetting game state 1');
+            var newState = __assign({}, state);
+            console.log('resetting game state 2');
+            newState.createGameState = {
+                attemptedToCreate: false,
+                success: false
+            };
+            console.log('resetting game state 3');
+            newState.pokerState.errorMessage = '';
+            console.log('resetting game state 4');
+            console.log('game created statea');
+            console.log('resetting game state 5');
+            console.log(newState);
+            return newState;
         //case 'ADD_PLAYER':
         //    return { ...state, ...{ playerName: action.name, joined: true } };
         //case 'PLAYER_ADDED':
@@ -266,7 +315,14 @@ exports.reducer = function (state, incomingAction) {
         //   return { ...state, ...{ hand: action.hand } };
         default:
             if (state === undefined) {
-                return BlankState();
+                var newState = {
+                    pokerState: BlankState(),
+                    createGameState: {
+                        attemptedToCreate: false,
+                        success: false
+                    }
+                };
+                return newState;
             }
             return state;
     }

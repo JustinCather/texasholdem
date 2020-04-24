@@ -20,6 +20,21 @@ namespace TexasHoldEm.Hubs
             this.userProvider = userProvider;
         }
 
+        private async Task SendGameCreated(string userId)
+        {
+            await Clients.Client(userId).SendAsync("gameCreated");
+        }
+
+        private async Task SendGameAlreadyExists(string userId)
+        {
+            await Clients.Client(userId).SendAsync("gameAlreadyExists");
+        }
+
+        private async Task SendJoinStatus(string userId, GameState state)
+        {
+            await Clients.Client(userId).SendAsync("signalrGameStateUpdate", state);
+        }
+
         private async Task SendGameState(GameState state)
         {
             var users = state.Seats
@@ -48,7 +63,18 @@ namespace TexasHoldEm.Hubs
                 }
             }
         }
-
+        public async Task CreateGame(CreateGame game)
+        {
+            var successful = gameProvider.CreateGame(game.GameName, game.StartingMoney, game.BigBlind);
+            if (successful)
+            {
+                await SendGameCreated(Context.ConnectionId);
+            }
+            else
+            {
+                await SendGameAlreadyExists(Context.ConnectionId);
+            }
+        }
         public async Task TakeAction(PlayerAction action)
         {
             GameState state = null;
@@ -69,6 +95,11 @@ namespace TexasHoldEm.Hubs
             {
                 case PlayerAction.ActionType.Add:
                     state = gameProvider.AddPlayer(action.GameName, action.PlayerName);
+                    if(state.JoinedGame == false && !string.IsNullOrEmpty(state.ErrorMessage))
+                    {
+                        await SendJoinStatus(Context.ConnectionId, state);
+                        return;
+                    }
                     break;
                 case PlayerAction.ActionType.Start:
                     state = gameProvider.StartGame(action.GameName);

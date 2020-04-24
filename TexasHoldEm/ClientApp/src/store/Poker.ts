@@ -59,6 +59,10 @@ export enum CardValue {
 
 // -----------------
 // STATE - This defines the type of data maintained in the Redux store.
+export interface CreateGameState {
+    attemptedToCreate: boolean,
+    success: boolean
+}
 
 export interface PokerState {
     state: GameState;
@@ -70,6 +74,11 @@ export interface PokerState {
     bigBlindAmount: number;
     communityCards: Card[];
     seats: Seat[];
+    errorMessage: string;
+}
+export interface AppState {
+    pokerState: PokerState,
+    createGameState: CreateGameState
 }
 
 function BlankState() {
@@ -82,7 +91,8 @@ function BlankState() {
         bigBlindAmount: 0,
         communityCards: [],
         seats: [],
-        joinedGame: false
+        joinedGame: false,
+        errorMessage: ''
     }
 }
 function NewInitState() {
@@ -262,10 +272,13 @@ export interface StartGame { type: 'START_GAME', game: string }
 export interface GameStarted { type: 'GAME_STARTED' }
 export interface PlayerBeingDealt { type: 'PLAYER_BEING_DEALT', hand: string[] }
 export interface GameStateUpdated { type: 'UPDATE_GAME_STATE', state: PokerState }
-
+export interface CreateGame {type:'CREATE_GAME', gameName:string,buyIn:number,bigBlind:number}
+export interface GameCreated { type: 'GAME_CREATED' };
+export interface GameAlreayExists { type: 'GAME_ALREADY_EXISTS' };
+export interface ResetCreateGameState { type: 'RESET_CREATE_GAME' };
 // Declare a 'discriminated union' type. This guarantees that all references to 'type' properties contain one of the
 // declared type strings (and not any other arbitrary string).
-export type KnownAction = AddPlayer | GameStateUpdated | PlayerFold | PlayerBet | PlayerAdded | PlayerNameChanged | GameNameChanged | StartGame | GameStarted | PlayerBeingDealt;
+export type KnownAction = CreateGame| ResetCreateGameState | GameCreated | GameAlreayExists|AddPlayer | GameStateUpdated | PlayerFold | PlayerBet | PlayerAdded | PlayerNameChanged | GameNameChanged | StartGame | GameStarted | PlayerBeingDealt;
 
 // ----------------
 // ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
@@ -285,24 +298,69 @@ export const actionCreators = {
     playerChange: (name: string) => ({ type: 'PLAYER_NAME_CHANGED', name: name } as PlayerNameChanged),
     startGame: (): AppThunkAction<KnownAction> => (dispatch, getState) => {
         const state = getState();
-        const poker = state.poker;
+        const poker = state.poker?.pokerState;
         const game = poker === undefined ? "" : poker.name;
         dispatch({ type: 'START_GAME', game: game });
+    },
+    createGame: (gameName: string, buyIn: number, bigBlind: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
+        dispatch({ type: 'CREATE_GAME', gameName: gameName, buyIn: buyIn, bigBlind: bigBlind });
+    },
+    resetCreateGame: (): AppThunkAction<KnownAction> => (dispatch, getState) => {
+        dispatch({ type: 'RESET_CREATE_GAME' });
     }
 }
 
 // ----------------
 // REDUCER - For a given state and action, returns the new state. To support time travel, this must not mutate the old state.
 
-export const reducer: Reducer<PokerState> = (state: PokerState | undefined, incomingAction: Action): PokerState => {
+export const reducer: Reducer<AppState> = (state: AppState | undefined, incomingAction: Action): AppState => {
     const action = incomingAction as KnownAction;
-    console.log('what action did i get');
-    console.log(action);
+    console.log('poker reducer');
+    console.log('currentState');
+    console.log(state);
+    console.log('action type');
+    console.log(action.type);
     switch (action.type) {
         case 'UPDATE_GAME_STATE':
+            var newState = { ...state } as AppState;
+            newState.pokerState = action.state;
             console.log('new state');
             console.log(action.state);
-            return { ...action.state };
+            return newState;
+
+        case 'GAME_CREATED':
+            var newState = { ...state } as AppState;
+            newState.createGameState = {
+                attemptedToCreate: true,
+                success: true
+            }
+            console.log('game created statea');
+            console.log(newState);
+            return newState;
+        case 'GAME_ALREADY_EXISTS':
+            var newState = { ...state } as AppState;
+            newState.createGameState = {
+                attemptedToCreate: true,
+                success: false
+            }
+            console.log('game created statea');
+            console.log(newState);
+            return newState;
+        case 'RESET_CREATE_GAME':
+            console.log('resetting game state 1');
+            var newState = { ...state } as AppState;
+            console.log('resetting game state 2');
+            newState.createGameState = {
+                attemptedToCreate: false,
+                success: false
+            };
+            console.log('resetting game state 3');
+            newState.pokerState.errorMessage = '';
+            console.log('resetting game state 4');
+            console.log('game created statea');
+            console.log('resetting game state 5');
+            console.log(newState);
+            return newState;
         //case 'ADD_PLAYER':
         //    return { ...state, ...{ playerName: action.name, joined: true } };
         //case 'PLAYER_ADDED':
@@ -318,7 +376,15 @@ export const reducer: Reducer<PokerState> = (state: PokerState | undefined, inco
         //   return { ...state, ...{ hand: action.hand } };
         default:
             if (state === undefined) {
-                return BlankState();
+
+                var newState = {
+                    pokerState:  BlankState(),
+                    createGameState: {
+                        attemptedToCreate: false,
+                        success: false
+                    }
+                } as AppState;
+                return newState;
             }
             return state;
     }

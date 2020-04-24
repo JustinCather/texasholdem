@@ -13,5 +13,6 @@ namespace TexasHoldEm.Models
         public List<Card> CommunityCards { get; set; } = new List<Card>();
         public Seat[] Seats { get; set; } = new Seat[9];
         public bool JoinedGame { get; set; } = true;
+        public string ErrorMessage { get; set; }
     }
 }

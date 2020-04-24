@@ -174,7 +174,7 @@ namespace TexasHoldEm.Test
         [ClassData(typeof(HandTestData))]
         public void TestHand(HandType handType, Card[] hand)
         {
-            var game = new Game("test");
+            var game = new Game("test",20,20);
             var result = game.GetHandResult(hand);
             Assert.Equal(handType, result.HandType);
         }
@@ -182,7 +182,7 @@ namespace TexasHoldEm.Test
         [Fact]
         public void RunGame()
         {
-            var game = new Game("test");
+            var game = new Game("test",20,2);
             game.AddPlayer("a");
             game.AddPlayer("b");
             game.AddPlayer("c");

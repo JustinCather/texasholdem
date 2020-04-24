@@ -5,6 +5,6 @@ var Poker = require("./Poker");
 // the reducer with the matching name. It's important that the names match exactly, and that the reducer
 // acts on the corresponding ApplicationState property type.
 exports.reducers = {
-    poker: Poker.reducer
+    poker: Poker.reducer,
 };
 //# sourceMappingURL=index.js.map

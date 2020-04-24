@@ -11,7 +11,6 @@ type PokerProps =
     typeof PokerStore.actionCreators &
     RouteComponentProps<{}>;
 
-
 class Table extends React.PureComponent<PokerProps> {
 
     private getCardImage(card: PokerStore.Card) {
@@ -142,6 +141,6 @@ class Table extends React.PureComponent<PokerProps> {
 };
 
 export default connect(
-    (state: ApplicationState) => state.poker,
+    (state: ApplicationState) => state.poker.pokerState,
     PokerStore.actionCreators
 )(Table as any);

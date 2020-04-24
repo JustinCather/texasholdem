@@ -45,9 +45,27 @@ const connection = new signalR.HubConnectionBuilder()
     .withAutomaticReconnect()
     .build();
 
+
 export function signalRInvokeMiddleware(store: any) {
     return (next: any) => async (action: any) => {
+        console.log('current action');
+        console.log(action);
         switch (action.type) {
+            case "CREATE_GAME": {
+                console.log('Tryign to creat game');
+                console.log(action);
+                console.log(action.gameName);
+                console.log(action.bigBlind);
+                console.log(action.buyIn);
+                var createGameAction = {
+                    GameName:action.gameName,
+                    BigBlind: action.bigBlind,
+                    StartingMoney: action.buyIn
+                };
+                console.log(createGameAction);
+                connection.invoke("CreateGame", createGameAction);
+                break;
+            }
             case "ADD_PLAYER": {
                 let playerAction = {
                     Action: ActionType.Add,
@@ -55,6 +73,7 @@ export function signalRInvokeMiddleware(store: any) {
                     GameName: action.game,
                     Wager: 0
                 };
+                console.log('taking action 1');
                 connection.invoke("TakeAction", playerAction);
                 break;
             }
@@ -65,6 +84,7 @@ export function signalRInvokeMiddleware(store: any) {
                     GameName: action.game,
                     Wager: 0
                 };
+                console.log('taking action 2');
                 connection.invoke("TakeAction", playerAction);
                 break;
             }
@@ -75,6 +95,7 @@ export function signalRInvokeMiddleware(store: any) {
                     GameName: action.game,
                     Wager: action.wager
                 };
+                console.log('taking action 3');
                 connection.invoke("TakeAction", playerAction);
                 break;
             }
@@ -101,6 +122,14 @@ export function signalRRegisterCommands(store: any) {
         console.log("Game State Updated");
     });
 
+    connection.on('gameAlreadyExists', (state) => {
+        store.dispatch({ type: 'GAME_ALREADY_EXISTS', state: state });
+    });
+
+    connection.on('gameCreated', (state) => {
+        store.dispatch({ type: 'GAME_CREATED', state: state });
+    });
+    
     connection.on('gameStarted', data => {
         store.dispatch({ type: 'GAME_STARTED' });
         console.log("The game has started");

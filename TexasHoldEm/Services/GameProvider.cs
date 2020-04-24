@@ -19,8 +19,8 @@ namespace TexasHoldEm.Services
                 State = game.State,
                 CurrentBet = game.MinBet,
                 PotSize = game.PotSize,
-                SmallBlindAmount = 25, //todo
-                BigBlindAmount = 50, //todo
+                SmallBlindAmount = game.BigBlindAmount/2.0, //todo
+                BigBlindAmount = game.BigBlindAmount, //todo
                 CommunityCards = new List<Card>(game.GetTableCards().Select(x => new Card(x.Suite, x.Value))),
             };
 
@@ -62,15 +62,30 @@ namespace TexasHoldEm.Services
             var instance = Games[game];
             return instance.GetPlayerCards(user).Select(x => new Card(x.Suite, x.Value));
         }
-
+        public bool CreateGame(string gameName, double startingMoney, double bigBlind)
+        {
+            if (!Games.ContainsKey(gameName))
+            {
+                var game  = new Library.Game(gameName,startingMoney,bigBlind);
+                Games[gameName] = game;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
         public GameState AddPlayer(string game, string name)
         {
             Library.Game instance;
 
             if (!Games.ContainsKey(game))
             {
-                instance = new Library.Game(game);
-                Games[game] = instance;
+                return new GameState()
+                {
+                    JoinedGame = false,
+                    ErrorMessage = "Game Does Not Exist"
+               };
             }
             else
             {
