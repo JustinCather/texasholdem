@@ -262,7 +262,7 @@ function NewInitState() {
 // They do not themselves have any side-effects; they just describe something that is going to happen.
 // Use @typeName and isActionType for type detection that works even after serialization/deserialization.
 
-export interface AddPlayer { type: 'ADD_PLAYER', game: string, name: string }
+export interface AddPlayer { type: 'ADD_PLAYER', game: string, name: string, avatar: string }
 export interface PlayerBet { type: 'PLAYER_BET', game: string, name: string, wager: number }
 export interface PlayerFold { type: 'PLAYER_FOLD', game: string, name: string }
 export interface PlayerAdded { type: 'PLAYER_ADDED', name: string, players: string[] }
@@ -285,8 +285,8 @@ export type KnownAction = CreateGame| ResetCreateGameState | GameCreated | GameA
 // They don't directly mutate state, but they can have external side-effects (such as loading data).
 
 export const actionCreators = {
-    join: (game: string, name: string): AppThunkAction<KnownAction> => (dispatch, getState) => {
-        dispatch({ type: 'ADD_PLAYER', game: game, name: name });
+    join: (game: string, name: string, avatar: string): AppThunkAction<KnownAction> => (dispatch, getState) => {
+        dispatch({ type: 'ADD_PLAYER', game: game, name: name,avatar:avatar });
     },
     bet: (game: string, name: string, wager: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
         dispatch({ type: 'PLAYER_BET', game: game, name: name, wager: wager });
@@ -378,7 +378,7 @@ export const reducer: Reducer<AppState> = (state: AppState | undefined, incoming
             if (state === undefined) {
 
                 var newState = {
-                    pokerState:  BlankState(),
+                    pokerState: BlankState(),
                     createGameState: {
                         attemptedToCreate: false,
                         success: false

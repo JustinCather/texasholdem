@@ -31,7 +31,7 @@ namespace TexasHoldEm.Services
                     SeatTaken = true,
                     Player = new PlayerState()
                     {
-                        ProfileImage = string.Empty,
+                        ProfileImage =p.Avatar,
                         PlayerName = p.Name,
                         AvailableMoney = p.Chips,
                         CurrentBet = p.CurrentBet,
@@ -75,7 +75,7 @@ namespace TexasHoldEm.Services
                 return false;
             }
         }
-        public GameState AddPlayer(string game, string name)
+        public GameState AddPlayer(string game, string name,string avatar)
         {
             Library.Game instance;
 
@@ -92,7 +92,7 @@ namespace TexasHoldEm.Services
                 instance = Games[game];
             }
 
-            instance.AddPlayer(name);
+            instance.AddPlayer(name,avatar);
 
             return GetState(instance);
         }

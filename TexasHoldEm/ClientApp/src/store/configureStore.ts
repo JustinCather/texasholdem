@@ -71,6 +71,7 @@ export function signalRInvokeMiddleware(store: any) {
                     Action: ActionType.Add,
                     PlayerName: action.name,
                     GameName: action.game,
+                    Avatar: action.avatar,
                     Wager: 0
                 };
                 console.log('taking action 1');

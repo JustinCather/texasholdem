@@ -13,6 +13,7 @@ namespace TexasHoldEm.Library
         }
 
         public string Name { get; set; } = string.Empty;
+        public string Avatar { get; set; } = string.Empty;
         public int Position { get; set; } = 0;
         public double Chips { get; set; } = 0;
         public  double CurrentBet { get; set; } = 0;

@@ -52,7 +52,7 @@ class Table extends React.PureComponent<PokerProps> {
                     <h1>Poker</h1>
 
                     <div style={{
-                        height: '65%', width: '70vw', top: '50%', left: '50%', position: 'relative', transform: 'translate(-60%,-70%)', border: '8px solid #7c3333', borderRadius: '160px'
+                        height: '65%', width: '65vw', top: '50%', left: '50%', position: 'relative', transform: 'translate(-65%,-70%)', border: '8px solid #7c3333', borderRadius: '160px'
                     }}>
                         <div id='table-div' style={{ backgroundColor: 'green', border: '7px solid #a95555', borderRadius: '150px', height: '100%', width: '100%' }}>
                             <div style={{ border: '7px solid rgba(0, 0, 0, .1)', borderRadius: '140px', height: '100%', width: '100%' }}>
@@ -62,7 +62,7 @@ class Table extends React.PureComponent<PokerProps> {
                                     JCS CASINO
                             </h1>
                                 {(this.props.potSize > 0) &&
-                                    <div style={{ left: '50%', position: 'relative', transform: 'translate(-50%,0%)', textAlign: 'center', top: '-10%', width: '25%' }}>
+                                    <div style={{ left: '50%', position: 'relative', transform: 'translate(-50%,0%)', textAlign: 'center', top: '0%', width: '25%' }}>
                                         <img src='./chips.png' style={{ height: '6vh' }} />
                                         <h6 style={{ backgroundColor: 'rgba(0,0,0,.4)', color: 'lightgray', textAlign: 'center' }}>Pot: ${this.props.potSize}</h6>
                                     </div>
@@ -84,26 +84,26 @@ class Table extends React.PureComponent<PokerProps> {
                                         <img src={this.getCardImage(this.props.communityCards[4])} style={{ height: '18vh' }} />
                                     }
                                 </div>
-                                <div style={{ top: '48vH', left: '13vW', position: 'absolute' }}>
+                                <div style={{ top: '56vH', left: '13vW', position: 'absolute' }}>
                                     <Player {...seats[0].player} chipsTop={'-7vh'} chipsLeft={'6vw'} />
                                 </div>
                                 {(seats[1].seatTaken && seats[1].player) &&
-                                    <div style={{ top: '45vH', left: '0vW', position: 'absolute' }}>
+                                    <div style={{ top: '51vH', left: '0vW', position: 'absolute' }}>
                                         <Player {...seats[1].player} cardToTheLeft={true} dealerIconLeft={'85px'} chipsTop={'-6vH'} chipsLeft={'8vw'} />
                                     </div>
                                 }
                                 {(seats[2].seatTaken && seats[2].player) &&
-                                    <div style={{ top: '17vH', left: '-5vW', position: 'absolute' }}>
+                                    <div style={{ top: '22vH', left: '-4vW', position: 'absolute' }}>
                                         <Player {...seats[2].player} cardToTheLeft={true} dealerIconLeft={'85px'} chipsTop={'6vH'} chipsLeft={'10vw'} />
                                     </div>
                                 }
                                 {(seats[3].seatTaken && seats[3].player) &&
-                                    <div style={{ top: '-6vH', left: '3vW', position: 'absolute' }}>
+                                    <div style={{ top: '-4vH', left: '0vW', position: 'absolute' }}>
                                         <Player {...seats[3].player} cardToTheLeft={true} dealerIconLeft={'85px'} chipsTop={'15vH'} chipsLeft={'8vw'} />
                                     </div>
                                 }
                                 {(seats[4].seatTaken && seats[4].player) &&
-                                    <div style={{ top: '-11vH', left: '19vW', position: 'absolute' }}>
+                                    <div style={{ top: '-11vH', left: '16vW', position: 'absolute' }}>
                                         <Player {...seats[4].player} cardToTheLeft={true} dealerIconLeft={'85px'} chipsTop={'18vH'} chipsLeft={'2vw'} />
                                     </div>
                                 }
@@ -114,17 +114,17 @@ class Table extends React.PureComponent<PokerProps> {
                                     </div>
                                 }
                                 {(seats[6].seatTaken && seats[6].player) &&
-                                    <div style={{ top: '-6vH', left: '59vW', position: 'absolute' }}>
+                                    <div style={{ top: '-4vH', left: '56vW', position: 'absolute' }}>
                                         <Player {...seats[6].player} cardToTheLeft={false} dealerIconLeft={'0vw'} chipsTop={'15vH'} chipsLeft={'-4vw'} />
                                     </div>
                                 }
                                 {(seats[7].seatTaken && seats[7].player) &&
-                                    <div style={{ top: '17vH', left: '67VW', position: 'absolute' }}>
+                                    <div style={{ top: '22vH', left: '61VW', position: 'absolute' }}>
                                         <Player {...seats[7].player} cardToTheLeft={false} dealerIconLeft={'0vw'} chipsTop={'6vH'} chipsLeft={'-5vw'} />
                                     </div>
                                 }
                                 {(seats[8].seatTaken && seats[8].player) &&
-                                    <div style={{ top: '45vH', left: '62vW', position: 'absolute' }}>
+                                    <div style={{ top: '51vH', left: '56vW', position: 'absolute' }}>
                                         <Player {...seats[8].player} cardToTheLeft={false} dealerIconLeft={'0vw'} chipsTop={'-6vH'} chipsLeft={'-3vw'} />
                                     </div>
                                 }

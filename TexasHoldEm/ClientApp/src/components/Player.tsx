@@ -33,7 +33,7 @@ class Player extends React.PureComponent<PokerProps> {
                 height: '10vH', width: '10vH', backgroundColor: '#263238', borderRadius: '50%', overflow: 'hidden', border: '2px solid #263238', position: 'relative', left: '50%', transform: 'translatex(-50%)'
             }}>
                 {this.props.profileImage &&
-                    <img src={this.props.profileImage} style={{height:'10vH',width:'10vH'}} />
+                    <img src={window.location.origin + '/' + this.props.profileImage } style={{height:'10vH',width:'10vH'}} />
 }           </div>
         );
 

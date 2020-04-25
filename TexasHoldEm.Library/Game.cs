@@ -385,7 +385,7 @@ namespace TexasHoldEm.Library
             }
         }
 
-        public bool AddPlayer(string name)
+        public bool AddPlayer(string name,string avatar)
         {
             if (!PlayerLookup.ContainsKey(name))
             {
@@ -393,7 +393,8 @@ namespace TexasHoldEm.Library
                 {
                     Name = name,
                     Position = Players.Count,
-                    Chips = BuyInAmount
+                    Chips = BuyInAmount,
+                    Avatar = avatar
                 };
                 PlayerLookup[name] = newPlayer;
                 Players.Add(newPlayer);

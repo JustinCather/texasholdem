@@ -20,5 +20,6 @@ namespace TexasHoldEm.Models
         public string GameName { get; set; } = string.Empty;
         public string PlayerName { get; set; } = string.Empty;
         public double Wager { get; set; } = 0;
+        public string Avatar { get; set; }
     }
 }

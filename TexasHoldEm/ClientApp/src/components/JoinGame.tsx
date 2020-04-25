@@ -4,6 +4,7 @@ import { Form, FormGroup, Button, Label, Input } from 'reactstrap';
 import { RouteComponentProps } from 'react-router';
 import { ApplicationState } from '../store';
 import * as PokerStore from '../store/Poker';
+import axios from 'axios';
 
 interface PageState {
     gameName: string,
@@ -11,7 +12,8 @@ interface PageState {
     newGameName: string,
     buyIn: number,
     bigBlind: number,
-    createNewGame: boolean
+    createNewGame: boolean,
+    imgFile: File | null
 }
 
 type PokerProps =
@@ -30,7 +32,8 @@ class JoinGame extends React.PureComponent<PokerProps, PageState> {
             bigBlind: .50,
             buyIn: 20,
             createNewGame: false,
-            newGameName: ''
+            newGameName: '',
+            imgFile: null,
         };
 
         this.handleGameNameChange = this.handleGameNameChange.bind(this);
@@ -40,6 +43,13 @@ class JoinGame extends React.PureComponent<PokerProps, PageState> {
         this.handleNewGameNameChange = this.handleNewGameNameChange.bind(this);
         this.handleCreateNewGame = this.handleCreateNewGame.bind(this);
         this.handleBack = this.handleBack.bind(this);
+        this.handleUploadClick = this.handleUploadClick.bind(this);
+    }
+
+
+    setFile(e: React.ChangeEvent<HTMLInputElement>) {
+        if (e.currentTarget.files && e.currentTarget.files[0])
+            this.setState({ imgFile: e.currentTarget.files[0] });
     }
     handleGameNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         var newState = { ...this.state };
@@ -90,6 +100,38 @@ class JoinGame extends React.PureComponent<PokerProps, PageState> {
         this.setState(newState);
         this.props.resetCreateGame();
     }
+
+    handleUploadClick = () => {
+        if (this.state.imgFile) {
+            const url = window.location.origin + '/api/Upload';
+            console.log('api url');
+            console.log(url);
+            const formData = new FormData();
+            formData.append('file', this.state.imgFile);
+
+            const config = {
+
+                headers: {
+
+                    'content-type': 'multipart/form-data',
+
+                },
+
+            };
+
+            var result = axios.post(url, formData, config).then(
+                data => {
+                    console.log('response data');
+                    console.log(data);
+                    this.props.join(this.state.gameName, this.state.playerName, data.data.dbPath);
+                }
+            );
+            // this.props.join(this.state.gameName, this.state.playerName)
+        } else {
+            this.props.join(this.state.gameName, this.state.playerName, '');
+        }
+    }
+
     public render() {
         console.log('create game state');
         console.log(this.state);
@@ -100,7 +142,7 @@ class JoinGame extends React.PureComponent<PokerProps, PageState> {
             return (
                 <React.Fragment>
                     <h1>Create Game</h1>
-                    <div style={{ width:'25%',position: 'absolute', left: '50%', transform: 'translatex(-50%)' }}>
+                    <div style={{ width: '25%', position: 'absolute', left: '50%', transform: 'translatex(-50%)' }}>
                         <Form>
                             <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
                                 <Label for="newGameName" className="mr-sm-2">Game</Label>
@@ -113,13 +155,13 @@ class JoinGame extends React.PureComponent<PokerProps, PageState> {
                             <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
                                 <Label for="bigBlind" className="mr-sm-2">BigBlind</Label>
                                 <Input type="number" name="bigBlind" id="bigBlind" value={this.state.bigBlind} onChange={this.handleBigBlindChange} />
-                            </FormGroup>
+                            </FormGroup>                            
                         </Form>
                         <Button style={{ marginTop: '10px' }} onClick={this.handleBack}>Back</Button>
-                        <Button style={{ marginTop: '10px', marginLeft:'10px' }} onClick={() => this.props.createGame(this.state.newGameName, this.state.buyIn, this.state.bigBlind)}>Create</Button>
+                        <Button style={{ marginTop: '10px', marginLeft: '10px' }} onClick={() => this.props.createGame(this.state.newGameName, this.state.buyIn, this.state.bigBlind)}>Create</Button>
                         {(this.props.createGameState.attemptedToCreate && !this.props.createGameState.success) &&
                             <div>
-                                <h4 style={{ color: 'red', marginTop:'15px' }}>A game with this name already exists</h4>
+                                <h4 style={{ color: 'red', marginTop: '15px' }}>A game with this name already exists</h4>
                             </div>
                         }
                     </div>
@@ -141,7 +183,7 @@ class JoinGame extends React.PureComponent<PokerProps, PageState> {
             return (
                 <React.Fragment>
                     <h1>Poker</h1>
-                    <div style={{ width: '25%',position: 'absolute', left: '50%', transform: 'translatex(-50%)' }}>
+                    <div style={{ width: '25%', position: 'absolute', left: '50%', transform: 'translatex(-50%)' }}>
                         <Form>
                             <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
                                 <Label for="gameName" className="mr-sm-2">Game</Label>
@@ -151,9 +193,13 @@ class JoinGame extends React.PureComponent<PokerProps, PageState> {
                                 <Label for="userName" className="mr-sm-2">Player Name</Label>
                                 <Input type="text" name="userName" id="userName" value={this.state.playerName} onChange={this.handleNameChange} />
                             </FormGroup>
+                            <FormGroup className="mb-2 mr-sm-2 mb-sm-0">
+                                <Label for="profilePic" className="mr-sm-2">Avatar</Label>
+                                <Input type="file" name="profilePic" id="profilePic" onChange={e => this.setFile(e)} />
+                            </FormGroup>
                         </Form>
                         <Button style={{ marginTop: '10px' }} onClick={this.handleCreateNewGame}>Create New Game</Button>
-                        <Button style={{ marginTop: '10px', marginLeft: '10px' }} onClick={() => this.props.join(this.state.gameName, this.state.playerName)}>Join</Button>
+                        <Button style={{ marginTop: '10px', marginLeft: '10px' }} onClick={() => this.handleUploadClick()}>Join</Button>
                         <h4 style={{ color: 'red', marginTop: '15px' }}>{this.props.pokerState.errorMessage}</h4>
                     </div>
                 </React.Fragment>

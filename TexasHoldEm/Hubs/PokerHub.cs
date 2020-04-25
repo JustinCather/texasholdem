@@ -94,7 +94,7 @@ namespace TexasHoldEm.Hubs
             switch (action.Action)
             {
                 case PlayerAction.ActionType.Add:
-                    state = gameProvider.AddPlayer(action.GameName, action.PlayerName);
+                    state = gameProvider.AddPlayer(action.GameName, action.PlayerName,action.Avatar);
                     if(state.JoinedGame == false && !string.IsNullOrEmpty(state.ErrorMessage))
                     {
                         await SendJoinStatus(Context.ConnectionId, state);

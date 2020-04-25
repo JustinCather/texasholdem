@@ -226,8 +226,8 @@ function NewInitState() {
 // ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
 // They don't directly mutate state, but they can have external side-effects (such as loading data).
 exports.actionCreators = {
-    join: function (game, name) { return function (dispatch, getState) {
-        dispatch({ type: 'ADD_PLAYER', game: game, name: name });
+    join: function (game, name, avatar) { return function (dispatch, getState) {
+        dispatch({ type: 'ADD_PLAYER', game: game, name: name, avatar: avatar });
     }; },
     bet: function (game, name, wager) { return function (dispatch, getState) {
         dispatch({ type: 'PLAYER_BET', game: game, name: name, wager: wager });

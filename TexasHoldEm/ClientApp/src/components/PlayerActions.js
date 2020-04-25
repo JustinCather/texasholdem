@@ -107,7 +107,7 @@ var PlayerActions = /** @class */ (function (_super) {
     }
     PlayerActions.prototype.render = function () {
         return (React.createElement(React.Fragment, null,
-            React.createElement("div", { style: { position: 'absolute', top: '72vh', left: '40vW' } },
+            React.createElement("div", { style: { position: 'absolute', top: '81vh', left: '42vW' } },
                 (this.state.state === 'init' && this.props.currentBet == 0 && this.props.seats[0].player && this.props.seats[0].player.availableMoney > this.props.bigBlindAmount) &&
                     React.createElement("div", null,
                         React.createElement("button", { onClick: this.handleFold, style: { textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Fold "),
