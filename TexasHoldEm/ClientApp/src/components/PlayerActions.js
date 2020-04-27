@@ -25,6 +25,7 @@ var __assign = (this && this.__assign) || function () {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var React = require("react");
+var Player_1 = require("./Player");
 var PlayerActions = /** @class */ (function (_super) {
     __extends(PlayerActions, _super);
     function PlayerActions(props) {
@@ -49,34 +50,23 @@ var PlayerActions = /** @class */ (function (_super) {
             _this.setState(newState);
         };
         _this.handleBetOrRaise = function () {
-            var playerName = '';
-            if (_this.props.seats[0].player)
-                playerName = _this.props.seats[0].player.playerName;
-            _this.props.bet(_this.props.name, playerName, _this.state.playerBet);
+            _this.props.bet(_this.props.name, _this.state.player.playerName, _this.state.playerBet);
             alert('Sending bet of ' + _this.state.playerBet + 'to the server');
         };
         _this.handleFold = function () {
-            var playerName = '';
-            if (_this.props.seats[0].player)
-                playerName = _this.props.seats[0].player.playerName;
-            _this.props.fold(_this.props.name, playerName);
+            _this.props.fold(_this.props.name, _this.state.player.playerName);
             alert('Player Folded');
         };
         _this.handleCall = function () {
-            var playerName = '';
-            if (_this.props.seats[0].player)
-                playerName = _this.props.seats[0].player.playerName;
-            _this.props.bet(_this.props.name, playerName, _this.props.currentBet);
+            var _a;
+            console.log('handling check/call');
+            console.log('current table bet ' + _this.props.currentBet);
+            console.log('current player bet ' + _this.state.player.currentBet);
+            _this.props.bet(_this.props.name, _this.state.player.playerName, _this.state.playerBet - ((_a = _this.state.player.currentBet) !== null && _a !== void 0 ? _a : 0));
             alert('Player called the current bet');
         };
         _this.handleAllIn = function () {
-            var playerName = '';
-            var wager = 0;
-            if (_this.props.seats[0].player) {
-                playerName = _this.props.seats[0].player.playerName;
-                wager = _this.props.seats[0].player.availableMoney;
-            }
-            _this.props.bet(_this.props.name, playerName, wager);
+            _this.props.bet(_this.props.name, _this.state.player.playerName, _this.state.player.availableMoney);
             alert('Player called the current bet');
             alert('Player is going all in');
         };
@@ -85,16 +75,7 @@ var PlayerActions = /** @class */ (function (_super) {
             newState.state = 'init';
             _this.setState(newState);
         };
-        var _maxBet = 0;
-        if (_this.props.seats && _this.props.seats[0].player) {
-            _maxBet = _this.props.seats[0].player.availableMoney;
-        }
-        _this.state = {
-            state: 'init',
-            playerBet: _this.props.currentBet,
-            minBet: 0,
-            maxBet: _maxBet
-        };
+        _this.state = _this.initState(props);
         _this.handleFold = _this.handleFold.bind(_this);
         _this.handleCall = _this.handleCall.bind(_this);
         _this.handleAllIn = _this.handleAllIn.bind(_this);
@@ -105,30 +86,59 @@ var PlayerActions = /** @class */ (function (_super) {
         _this.setBet = _this.setBet.bind(_this);
         return _this;
     }
+    PlayerActions.prototype.initState = function (props) {
+        var _maxBet = 0;
+        var tempPlayer = props.seats.filter(function (x) { return x.seatTaken && x.player && x.player.isYou; })[0].player;
+        var player;
+        if (tempPlayer)
+            player = tempPlayer;
+        else {
+            player = new Player_1.default();
+            player.currentBet = 0;
+        }
+        if (player) {
+            _maxBet = player.availableMoney;
+        }
+        return {
+            state: 'init',
+            playerBet: props.currentBet,
+            minBet: 0,
+            maxBet: _maxBet,
+            player: player
+        };
+    };
+    PlayerActions.prototype.componentWillReceiveProps = function (nextProps) {
+        console.log('Resetting State');
+        console.log(nextProps);
+        var newState = this.initState(nextProps);
+        console.log(newState);
+        this.setState(newState);
+    };
     PlayerActions.prototype.render = function () {
+        var _a;
         return (React.createElement(React.Fragment, null,
             React.createElement("div", { style: { position: 'absolute', top: '81vh', left: '42vW' } },
-                (this.state.state === 'init' && this.props.currentBet == 0 && this.props.seats[0].player && this.props.seats[0].player.availableMoney > this.props.bigBlindAmount) &&
+                (this.state.state === 'init' && this.props.currentBet == 0 && this.state.player.availableMoney > this.props.bigBlindAmount) &&
                     React.createElement("div", null,
                         React.createElement("button", { onClick: this.handleFold, style: { textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Fold "),
                         React.createElement("button", { onClick: this.handleCall, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Check "),
                         React.createElement("button", { onClick: this.bet, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Bet  ")),
-                (this.state.state === 'init' && this.props.currentBet == 0 && this.props.seats[0].player && this.props.seats[0].player.availableMoney <= this.props.bigBlindAmount) &&
+                (this.state.state === 'init' && this.props.currentBet == 0 && this.state.player.availableMoney <= this.props.bigBlindAmount) &&
                     React.createElement("div", null,
                         React.createElement("button", { onClick: this.handleFold, style: { textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Fold "),
                         React.createElement("button", { onClick: this.handleCall, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Check "),
                         React.createElement("button", { onClick: this.handleAllIn, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " ALL IN! ")),
-                (this.state.state === 'init' && this.props.currentBet > 0 && this.props.seats[0].player && this.props.seats[0].player.availableMoney > this.props.currentBet) &&
+                (this.state.state === 'init' && this.props.currentBet > 0 && this.state.player.availableMoney > this.props.currentBet) &&
                     React.createElement("div", null,
                         React.createElement("button", { onClick: this.handleFold, style: { textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Fold "),
                         React.createElement("button", { onClick: this.handleCall, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } },
                             " Call ",
                             React.createElement("br", null),
                             " $",
-                            this.props.currentBet,
+                            this.props.currentBet - ((_a = this.state.player.currentBet) !== null && _a !== void 0 ? _a : 0),
                             " "),
                         React.createElement("button", { onClick: this.raise, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Raise ")),
-                (this.state.state === 'init' && this.props.currentBet > 0 && this.props.seats[0].player && this.props.seats[0].player.availableMoney <= this.props.currentBet) &&
+                (this.state.state === 'init' && this.props.currentBet > 0 && this.state.player.availableMoney <= this.props.currentBet) &&
                     React.createElement("div", null,
                         React.createElement("button", { onClick: this.handleFold, style: { textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Fold "),
                         React.createElement("button", { onClick: this.handleAllIn, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '15vH', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " ALL IN! ")),

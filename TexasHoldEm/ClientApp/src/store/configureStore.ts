@@ -52,17 +52,11 @@ export function signalRInvokeMiddleware(store: any) {
         console.log(action);
         switch (action.type) {
             case "CREATE_GAME": {
-                console.log('Tryign to creat game');
-                console.log(action);
-                console.log(action.gameName);
-                console.log(action.bigBlind);
-                console.log(action.buyIn);
                 var createGameAction = {
                     GameName:action.gameName,
                     BigBlind: action.bigBlind,
                     StartingMoney: action.buyIn
                 };
-                console.log(createGameAction);
                 connection.invoke("CreateGame", createGameAction);
                 break;
             }
@@ -74,7 +68,6 @@ export function signalRInvokeMiddleware(store: any) {
                     Avatar: action.avatar,
                     Wager: 0
                 };
-                console.log('taking action 1');
                 connection.invoke("TakeAction", playerAction);
                 break;
             }
@@ -85,7 +78,6 @@ export function signalRInvokeMiddleware(store: any) {
                     GameName: action.game,
                     Wager: 0
                 };
-                console.log('taking action 2');
                 connection.invoke("TakeAction", playerAction);
                 break;
             }
@@ -96,12 +88,19 @@ export function signalRInvokeMiddleware(store: any) {
                     GameName: action.game,
                     Wager: action.wager
                 };
-                console.log('taking action 3');
                 connection.invoke("TakeAction", playerAction);
                 break;
             }
             case 'START_GAME':
-                connection.invoke('StartGame', action.game);
+                let playerAction = {
+                    Action: ActionType.Start,
+                    PlayerName: action.name,
+                    GameName: action.game,
+                    Wager: 0
+                };
+                console.log('trying to start game');
+                console.log(playerAction);
+                connection.invoke('TakeAction', playerAction);
                 break;
         }
 

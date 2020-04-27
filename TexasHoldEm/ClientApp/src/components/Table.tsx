@@ -6,6 +6,8 @@ import * as PokerStore from '../store/Poker';
 import Player from './Player';
 import PlayerActions from './PlayerActions';
 import JoinGame from './JoinGame'
+import HandHistory from './HandHistory'
+import { GetCardImage } from '../helpers/cardImageHelper'
 type PokerProps =
     PokerStore.PokerState &
     typeof PokerStore.actionCreators &
@@ -13,9 +15,6 @@ type PokerProps =
 
 class Table extends React.PureComponent<PokerProps> {
 
-    private getCardImage(card: PokerStore.Card) {
-        return './cards/' + card.value + card.suit + '.png';
-    }
     private arrayRotate(arr: PokerStore.Seat[]) {
         let val = arr.shift();
         if (val)
@@ -39,9 +38,6 @@ class Table extends React.PureComponent<PokerProps> {
         return newArray;
     }
     public render() {
-        console.log('here are the props');
-        console.log(this.props);
-        
         if (!this.props.joinedGame) {
             return <JoinGame />
         }
@@ -67,21 +63,26 @@ class Table extends React.PureComponent<PokerProps> {
                                         <h6 style={{ backgroundColor: 'rgba(0,0,0,.4)', color: 'lightgray', textAlign: 'center' }}>Pot: ${this.props.potSize}</h6>
                                     </div>
                                 }
+                                {(this.props.state == PokerStore.GameState.Waiting) &&
+                                    <div>
+                                        <button onClick={() => this.props.startGame()}> Start Game </button>
+                                    </div>
+                                }
                                 <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 'max-content' }}>
                                     {(this.props.communityCards && this.props.communityCards[0]) &&
-                                        <img src={this.getCardImage(this.props.communityCards[0])} style={{ height: '18vh' }} />
+                                        <img src={GetCardImage(this.props.communityCards[0])} style={{ height: '18vh' }} />
                                     }
                                     {(this.props.communityCards && this.props.communityCards[1]) &&
-                                        <img src={this.getCardImage(this.props.communityCards[1])} style={{ height: '18vh' }} />
+                                        <img src={GetCardImage(this.props.communityCards[1])} style={{ height: '18vh' }} />
                                     }
                                     {(this.props.communityCards && this.props.communityCards[2]) &&
-                                        <img src={this.getCardImage(this.props.communityCards[2])} style={{ height: '18vh' }} />
+                                        <img src={GetCardImage(this.props.communityCards[2])} style={{ height: '18vh' }} />
                                     }
                                     {(this.props.communityCards && this.props.communityCards[3]) &&
-                                        <img src={this.getCardImage(this.props.communityCards[3])} style={{ height: '18vh' }} />
+                                        <img src={GetCardImage(this.props.communityCards[3])} style={{ height: '18vh' }} />
                                     }
                                     {(this.props.communityCards && this.props.communityCards[4]) &&
-                                        <img src={this.getCardImage(this.props.communityCards[4])} style={{ height: '18vh' }} />
+                                        <img src={GetCardImage(this.props.communityCards[4])} style={{ height: '18vh' }} />
                                     }
                                 </div>
                                 <div style={{ top: '56vH', left: '13vW', position: 'absolute' }}>
@@ -144,3 +145,9 @@ export default connect(
     (state: ApplicationState) => state.poker.pokerState,
     PokerStore.actionCreators
 )(Table as any);
+
+function HandHistroy() {
+    return (<div>
+        <HandHistory />
+    </div>);
+}

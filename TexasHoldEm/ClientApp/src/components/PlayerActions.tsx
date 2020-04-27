@@ -10,7 +10,8 @@ interface ActionState {
     state: string,
     playerBet: number,
     minBet: number,
-    maxBet: number
+    maxBet: number,
+    player: PokerStore.Player 
 }
 
 type PokerProps =
@@ -21,16 +22,8 @@ type PokerProps =
 class PlayerActions extends React.PureComponent<PokerProps, ActionState> {
     public constructor(props: PokerProps) {
         super(props);
-        var _maxBet = 0;
-        if (this.props.seats && this.props.seats[0].player) {
-            _maxBet = this.props.seats[0].player.availableMoney;
-        }
-        this.state = {
-            state: 'init',
-            playerBet: this.props.currentBet,
-            minBet: 0,
-            maxBet: _maxBet
-        };
+        this.state = this.initState(props);
+        
 
         this.handleFold = this.handleFold.bind(this);
         this.handleCall = this.handleCall.bind(this);
@@ -41,7 +34,28 @@ class PlayerActions extends React.PureComponent<PokerProps, ActionState> {
         this.raise = this.raise.bind(this);
         this.setBet = this.setBet.bind(this);
     }
+    private initState(props: PokerProps) {
+        var _maxBet = 0;
+        var tempPlayer = props.seats.filter((x) => x.seatTaken && x.player && x.player.isYou)[0].player;
+        let player;
+        if (tempPlayer)
+            player = tempPlayer;
+        else {
+            player = new Player();
+            player.currentBet = 0;
+        }
+        if (player) {
+            _maxBet = player.availableMoney;
+        }
+        return {
+            state: 'init',
+            playerBet: props.currentBet,
+            minBet: 0,
+            maxBet: _maxBet,
+            player: player
+        };
 
+    }
     bet = () => {
         let newState = { ...this.state };
         newState.state = 'increaseBet';
@@ -66,38 +80,26 @@ class PlayerActions extends React.PureComponent<PokerProps, ActionState> {
     };
 
     handleBetOrRaise = () => {
-        let playerName = '';
-        if (this.props.seats[0].player)
-            playerName = this.props.seats[0].player.playerName;
-        this.props.bet(this.props.name, playerName, this.state.playerBet);
+
+        this.props.bet(this.props.name, this.state.player.playerName, this.state.playerBet);
         alert('Sending bet of ' + this.state.playerBet + 'to the server');
     }
 
     handleFold = () => {
-        let playerName = '';
-        if (this.props.seats[0].player)
-            playerName = this.props.seats[0].player.playerName;
-        this.props.fold(this.props.name, playerName);
+        this.props.fold(this.props.name, this.state.player.playerName);
         alert('Player Folded');
     }
 
     handleCall = () => {
-        let playerName = '';
-        if (this.props.seats[0].player)
-            playerName = this.props.seats[0].player.playerName;
-        this.props.bet(this.props.name, playerName, this.props.currentBet);
+        console.log('handling check/call');
+        console.log('current table bet ' + this.props.currentBet);
+        console.log('current player bet ' + this.state.player.currentBet);
+        this.props.bet(this.props.name, this.state.player.playerName, this.state.playerBet - (this.state.player.currentBet ?? 0));
         alert('Player called the current bet');
     }
 
     handleAllIn = () => {
-        let playerName = '';
-        let wager = 0;
-        if (this.props.seats[0].player) {
-            playerName = this.props.seats[0].player.playerName;
-            wager = this.props.seats[0].player.availableMoney;
-        }
-
-        this.props.bet(this.props.name, playerName, wager);
+        this.props.bet(this.props.name, this.state.player.playerName, this.state.player.availableMoney);
         alert('Player called the current bet');
         alert('Player is going all in');
     }
@@ -107,11 +109,17 @@ class PlayerActions extends React.PureComponent<PokerProps, ActionState> {
         newState.state = 'init'
         this.setState(newState);
     }
-
+    public componentWillReceiveProps(nextProps: PokerProps) {
+        console.log('Resetting State');
+        console.log(nextProps);
+        var newState = this.initState(nextProps);
+        console.log(newState);
+        this.setState(newState);
+    }
     public render() {
         return (<React.Fragment>
             <div style={{ position: 'absolute', top: '81vh', left: '42vW' }}>
-                {(this.state.state === 'init' && this.props.currentBet == 0 && this.props.seats[0].player && this.props.seats[0].player.availableMoney > this.props.bigBlindAmount) &&
+                {(this.state.state === 'init' && this.props.currentBet == 0 &&  this.state.player.availableMoney > this.props.bigBlindAmount) &&
                     <div>
                     <button onClick={this.handleFold} style={{ textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Fold </button>
                     <button onClick={this.handleCall} style={{ textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Check </button>
@@ -119,7 +127,7 @@ class PlayerActions extends React.PureComponent<PokerProps, ActionState> {
                     </div>
                 }
 
-                {(this.state.state === 'init' && this.props.currentBet == 0 && this.props.seats[0].player && this.props.seats[0].player.availableMoney <= this.props.bigBlindAmount) &&
+                {(this.state.state === 'init' && this.props.currentBet == 0 && this.state.player.availableMoney <= this.props.bigBlindAmount) &&
                     <div>
                     <button onClick={this.handleFold} style={{ textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Fold </button>
                     <button onClick={this.handleCall} style={{ textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Check </button>
@@ -127,14 +135,14 @@ class PlayerActions extends React.PureComponent<PokerProps, ActionState> {
                     </div>
                 }
 
-                {(this.state.state === 'init' && this.props.currentBet > 0 && this.props.seats[0].player && this.props.seats[0].player.availableMoney > this.props.currentBet) &&
+                {(this.state.state === 'init' && this.props.currentBet > 0 &&  this.state.player.availableMoney > this.props.currentBet) &&
                     <div>
                     <button onClick={this.handleFold} style={{ textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Fold </button>
-                    <button onClick={this.handleCall} style={{ textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Call <br /> ${this.props.currentBet} </button>
+                    <button onClick={this.handleCall} style={{ textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Call <br /> ${this.props.currentBet - (this.state.player.currentBet ?? 0)} </button>
                     <button onClick={this.raise} style={{ textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Raise </button>
                     </div>
                 }
-                {(this.state.state === 'init' && this.props.currentBet > 0 && this.props.seats[0].player && this.props.seats[0].player.availableMoney <= this.props.currentBet) &&
+                {(this.state.state === 'init' && this.props.currentBet > 0 && this.state.player.availableMoney <= this.props.currentBet) &&
                     <div>
                     <button onClick={this.handleFold} style={{ textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Fold </button>
                     <button onClick={this.handleAllIn} style={{ textAlign: 'center', verticalAlign: 'top', marginLeft: '15vH', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> ALL IN! </button>

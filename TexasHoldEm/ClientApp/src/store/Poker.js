@@ -14,34 +14,37 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // models
 var GameState;
 (function (GameState) {
-    GameState["Start"] = "start";
-    GameState["Flop"] = "flop";
-    GameState["Turn"] = "turn";
-    GameState["River"] = "river";
-    GameState["GameOver"] = "gameOver";
+    GameState[GameState["Waiting"] = 0] = "Waiting";
+    GameState[GameState["Start"] = 1] = "Start";
+    GameState[GameState["Flop"] = 2] = "Flop";
+    GameState[GameState["Turn"] = 3] = "Turn";
+    GameState[GameState["River"] = 4] = "River";
+    GameState[GameState["GameOver"] = 5] = "GameOver";
 })(GameState = exports.GameState || (exports.GameState = {}));
-var Suit;
-(function (Suit) {
-    Suit["Hearts"] = "h";
-    Suit["Diamonds"] = "d";
-    Suit["Clubs"] = "c";
-    Suit["Spades"] = "s";
-})(Suit = exports.Suit || (exports.Suit = {}));
+var Suite;
+(function (Suite) {
+    Suite[Suite["Hearts"] = 0] = "Hearts";
+    Suite[Suite["Diamonds"] = 1] = "Diamonds";
+    Suite[Suite["Clubs"] = 2] = "Clubs";
+    Suite[Suite["Spades"] = 3] = "Spades";
+    Suite[Suite["Hidden"] = 4] = "Hidden";
+})(Suite = exports.Suite || (exports.Suite = {}));
 var CardValue;
 (function (CardValue) {
-    CardValue["Ace"] = "a";
-    CardValue["Two"] = "2";
-    CardValue["Three"] = "3";
-    CardValue["Four"] = "4";
-    CardValue["Five"] = "5";
-    CardValue["Six"] = "6";
-    CardValue["Seven"] = "7";
-    CardValue["Eight"] = "8";
-    CardValue["Nine"] = "9";
-    CardValue["Ten"] = "10";
-    CardValue["Jack"] = "j";
-    CardValue["Queen"] = "q";
-    CardValue["King"] = "k";
+    CardValue[CardValue["Ace"] = 0] = "Ace";
+    CardValue[CardValue["Two"] = 1] = "Two";
+    CardValue[CardValue["Three"] = 2] = "Three";
+    CardValue[CardValue["Four"] = 3] = "Four";
+    CardValue[CardValue["Five"] = 4] = "Five";
+    CardValue[CardValue["Six"] = 5] = "Six";
+    CardValue[CardValue["Seven"] = 6] = "Seven";
+    CardValue[CardValue["Eight"] = 7] = "Eight";
+    CardValue[CardValue["Nine"] = 8] = "Nine";
+    CardValue[CardValue["Ten"] = 9] = "Ten";
+    CardValue[CardValue["Jack"] = 10] = "Jack";
+    CardValue[CardValue["Queen"] = 11] = "Queen";
+    CardValue[CardValue["King"] = 12] = "King";
+    CardValue[CardValue["Hidden"] = 13] = "Hidden";
 })(CardValue = exports.CardValue || (exports.CardValue = {}));
 function BlankState() {
     return {
@@ -68,23 +71,23 @@ function NewInitState() {
         bigBlindAmount: 20,
         communityCards: [
             {
-                suit: Suit.Hearts,
+                suite: Suite.Hearts,
                 value: CardValue.King
             },
             {
-                suit: Suit.Hearts,
+                suite: Suite.Hearts,
                 value: CardValue.Queen
             },
             {
-                suit: Suit.Hearts,
+                suite: Suite.Hearts,
                 value: CardValue.Ten
             },
             {
-                suit: Suit.Clubs,
+                suite: Suite.Clubs,
                 value: CardValue.King
             },
             {
-                suit: Suit.Hearts,
+                suite: Suite.Hearts,
                 value: CardValue.Jack
             }
         ],
@@ -142,7 +145,7 @@ function NewInitState() {
                     playersTurn: true,
                     isYou: true,
                     isDealer: true,
-                    cards: [{ suit: Suit.Hearts, value: CardValue.Ace }, { suit: Suit.Hearts, value: CardValue.Eight }],
+                    cards: [{ suit: Suite.Hearts, value: CardValue.Ace }, { suit: Suite.Hearts, value: CardValue.Eight }],
                     profileImage: './sully.jpg'
                 }
             },
@@ -238,11 +241,14 @@ exports.actionCreators = {
     gameChange: function (name) { return ({ type: 'GAME_NAME_CHANGED', name: name }); },
     playerChange: function (name) { return ({ type: 'PLAYER_NAME_CHANGED', name: name }); },
     startGame: function () { return function (dispatch, getState) {
-        var _a;
         var state = getState();
-        var poker = (_a = state.poker) === null || _a === void 0 ? void 0 : _a.pokerState;
+        var poker = state.poker.pokerState;
+        console.log('getting poker state to start game');
+        console.log(poker);
         var game = poker === undefined ? "" : poker.name;
-        dispatch({ type: 'START_GAME', game: game });
+        var user = state.poker.pokerState.seats.filter(function (x) { return x.seatTaken && x.player && x.player.isYou; });
+        if (user[0].player)
+            dispatch({ type: 'START_GAME', game: game, name: user[0].player.playerName });
     }; },
     createGame: function (gameName, buyIn, bigBlind) { return function (dispatch, getState) {
         dispatch({ type: 'CREATE_GAME', gameName: gameName, buyIn: buyIn, bigBlind: bigBlind });
@@ -255,11 +261,6 @@ exports.actionCreators = {
 // REDUCER - For a given state and action, returns the new state. To support time travel, this must not mutate the old state.
 exports.reducer = function (state, incomingAction) {
     var action = incomingAction;
-    console.log('poker reducer');
-    console.log('currentState');
-    console.log(state);
-    console.log('action type');
-    console.log(action.type);
     switch (action.type) {
         case 'UPDATE_GAME_STATE':
             var newState = __assign({}, state);
@@ -286,18 +287,13 @@ exports.reducer = function (state, incomingAction) {
             console.log(newState);
             return newState;
         case 'RESET_CREATE_GAME':
-            console.log('resetting game state 1');
             var newState = __assign({}, state);
-            console.log('resetting game state 2');
             newState.createGameState = {
                 attemptedToCreate: false,
                 success: false
             };
-            console.log('resetting game state 3');
             newState.pokerState.errorMessage = '';
-            console.log('resetting game state 4');
-            console.log('game created statea');
-            console.log('resetting game state 5');
+            console.log('rest game created statea');
             console.log(newState);
             return newState;
         //case 'ADD_PLAYER':
@@ -320,7 +316,8 @@ exports.reducer = function (state, incomingAction) {
                     createGameState: {
                         attemptedToCreate: false,
                         success: false
-                    }
+                    },
+                    handHistoryState: []
                 };
                 return newState;
             }

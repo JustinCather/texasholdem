@@ -24,8 +24,6 @@ type PokerProps =
 class JoinGame extends React.PureComponent<PokerProps, PageState> {
     public constructor(props: PokerProps) {
         super(props);
-        console.log('constructor props');
-        console.log(props);
         this.state = {
             gameName: '',
             playerName: '',
@@ -104,40 +102,25 @@ class JoinGame extends React.PureComponent<PokerProps, PageState> {
     handleUploadClick = () => {
         if (this.state.imgFile) {
             const url = window.location.origin + '/api/Upload';
-            console.log('api url');
-            console.log(url);
             const formData = new FormData();
             formData.append('file', this.state.imgFile);
-
             const config = {
-
                 headers: {
-
                     'content-type': 'multipart/form-data',
-
                 },
-
             };
 
             var result = axios.post(url, formData, config).then(
                 data => {
-                    console.log('response data');
-                    console.log(data);
                     this.props.join(this.state.gameName, this.state.playerName, data.data.dbPath);
                 }
             );
-            // this.props.join(this.state.gameName, this.state.playerName)
         } else {
             this.props.join(this.state.gameName, this.state.playerName, '');
         }
     }
 
     public render() {
-        console.log('create game state');
-        console.log(this.state);
-        console.log(this.props);
-        console.log(this.props.createGameState.success);
-        console.log(this.state.createNewGame);
         if (this.state.createNewGame && !this.props.createGameState.success) {
             return (
                 <React.Fragment>

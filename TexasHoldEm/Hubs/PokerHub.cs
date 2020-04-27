@@ -44,22 +44,11 @@ namespace TexasHoldEm.Hubs
 
             foreach (var userAndIds in userProvider.GetUsersAndIds(users.Keys))
             {
-                var user = users[userAndIds.user];
+                state = gameProvider.PrepareGameStateForPlayer(state, userAndIds.user);
 
-                try
+                foreach (var id in userAndIds.ids)
                 {
-                    user.Cards = gameProvider.GetPlayerCards(state.Name, user.PlayerName);
-                    user.IsYou = true;
-
-                    foreach (var id in userAndIds.ids)
-                    {
-                        await Clients.Client(id).SendAsync("signalrGameStateUpdate", state);
-                    }
-                }
-                finally
-                {
-                    user.Cards = null;
-                    user.IsYou = false;
+                    await Clients.Client(id).SendAsync("signalrGameStateUpdate", state);
                 }
             }
         }
@@ -94,8 +83,8 @@ namespace TexasHoldEm.Hubs
             switch (action.Action)
             {
                 case PlayerAction.ActionType.Add:
-                    state = gameProvider.AddPlayer(action.GameName, action.PlayerName,action.Avatar);
-                    if(state.JoinedGame == false && !string.IsNullOrEmpty(state.ErrorMessage))
+                    state = gameProvider.AddPlayer(action.GameName, action.PlayerName, action.Avatar);
+                    if (state.JoinedGame == false && !string.IsNullOrEmpty(state.ErrorMessage))
                     {
                         await SendJoinStatus(Context.ConnectionId, state);
                         return;

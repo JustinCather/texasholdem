@@ -3,9 +3,10 @@ import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { ApplicationState } from '../store';
 import * as PokerStore from '../store/Poker';
-import { Form, FormGroup, Button, Label, Input } from 'reactstrap';
+import { Form, FormGroup, Button, Label, Input, Card } from 'reactstrap';
 import CSS from 'csstype';
 import { relative } from 'path';
+import { GetCardImage } from '../helpers/cardImageHelper'
 
 type PokerProps =
     PokerStore.Player &
@@ -21,12 +22,10 @@ type PokerProps =
 
 class Player extends React.PureComponent<PokerProps> {
     public render() {
-        console.log('Rendering player, props:');
-        console.log(this.props);
         let cardOne, cardTwo;
         if (this.props.cards && this.props.cards.length == 2) {
-            cardOne = './cards/' + this.props.cards[0].value + this.props.cards[0].suit + '.png';
-            cardTwo = './cards/' + this.props.cards[1].value + this.props.cards[1].suit + '.png';
+            cardOne = GetCardImage(this.props.cards[0]);
+            cardTwo = GetCardImage(this.props.cards[1]);
         }
         var playerImage = (
             <div style={{
@@ -76,17 +75,17 @@ class Player extends React.PureComponent<PokerProps> {
                     </div>
                 }
 
-                {(!this.props.isYou && !this.props.folded && this.props.cardToTheLeft) &&
+                {(!this.props.isYou && !this.props.folded && this.props.cards && this.props.cards.length > 0 && this.props.cardToTheLeft) &&
                     <div>
-                        <img src='./cards/card-back.jpg' style={{ height: '8vH', position: 'absolute', top: '0px', left: '-35px' }} />
-                        <img src='./cards/card-back.jpg' style={{ height: '8vH', position: 'absolute', top: '-5px', left: '-20px' }} />
+                    <img src={cardOne} style={{ height: '8vH', position: 'absolute', top: '0px', left: '-35px' }} />
+                    <img src={cardTwo} style={{ height: '8vH', position: 'absolute', top: '-5px', left: '-20px' }} />
                     </div>
                 }
 
-                {(!this.props.isYou && !this.props.folded && !this.props.cardToTheLeft) &&
+                {(!this.props.isYou && !this.props.folded && this.props.cards && this.props.cards.length > 0 && !this.props.cardToTheLeft) &&
                     <div>
-                        <img src='./cards/card-back.jpg' style={{ height: '8vH', position: 'absolute', top: '0px', left: '95px' }} />
-                        <img src='./cards/card-back.jpg' style={{ height: '8vH', position: 'absolute', top: '-5px', left: '110px' }} />
+                    <img src={cardOne} style={{ height: '8vH', position: 'absolute', top: '0px', left: '95px' }} />
+                    <img src={cardTwo} style={{ height: '8vH', position: 'absolute', top: '-5px', left: '110px' }} />
                     </div>
                 }
 

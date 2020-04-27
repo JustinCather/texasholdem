@@ -4,7 +4,7 @@ namespace TexasHoldEm.Models
 {
     public class GameState
     {
-        public Library.State State { get; set; } = Library.State.Start;
+        public Library.State State { get; set; } = Library.State.Waiting;
         public string Name { get; set; } = string.Empty;
         public double CurrentBet { get; set; } = 0;
         public double PotSize { get; set; } = 0;

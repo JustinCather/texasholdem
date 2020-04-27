@@ -4,11 +4,12 @@ import { Redirect } from 'react-router-dom';
 
 // models
 export enum GameState {
-    Start = 'start',
-    Flop = 'flop',
-    Turn = 'turn',
-    River = 'river',
-    GameOver = 'gameOver'
+    Waiting,
+    Start,
+    Flop,
+    Turn,
+    River,
+    GameOver
 }
 
 export interface Seat {
@@ -30,33 +31,39 @@ export interface Player {
 }
 
 export interface Card {
-    suit: Suit;
+    suite: Suite;
     value: CardValue;
 }
 
-export enum Suit {
-    Hearts = 'h',
-    Diamonds = 'd',
-    Clubs = 'c',
-    Spades = 's'
+export enum Suite {
+    Hearts,
+    Diamonds,
+    Clubs,
+    Spades,
+    Hidden
 }
 
 export enum CardValue {
-    Ace = 'a',
-    Two = '2',
-    Three = '3',
-    Four = '4',
-    Five = '5',
-    Six = '6',
-    Seven = '7',
-    Eight = '8',
-    Nine = '9',
-    Ten = '10',
-    Jack = 'j',
-    Queen = 'q',
-    King = 'k'
+    Ace,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Jack,
+    Queen,
+    King,
+    Hidden
 }
-
+export interface HandHistory {
+    player: string,
+    amount: number,
+    cards: Card[]
+}
 // -----------------
 // STATE - This defines the type of data maintained in the Redux store.
 export interface CreateGameState {
@@ -78,7 +85,8 @@ export interface PokerState {
 }
 export interface AppState {
     pokerState: PokerState,
-    createGameState: CreateGameState
+    createGameState: CreateGameState,
+    handHistoryState: HandHistory[]
 }
 
 function BlankState() {
@@ -106,23 +114,23 @@ function NewInitState() {
         bigBlindAmount: 20,
         communityCards: [
             {
-                suit: Suit.Hearts,
+                suite: Suite.Hearts,
                 value: CardValue.King
             },
             {
-                suit: Suit.Hearts,
+                suite: Suite.Hearts,
                 value: CardValue.Queen
             },
             {
-                suit: Suit.Hearts,
+                suite: Suite.Hearts,
                 value: CardValue.Ten
             },
             {
-                suit: Suit.Clubs,
+                suite: Suite.Clubs,
                 value: CardValue.King
             },
             {
-                suit: Suit.Hearts,
+                suite: Suite.Hearts,
                 value: CardValue.Jack
             }
         ],
@@ -180,7 +188,7 @@ function NewInitState() {
                     playersTurn: true,
                     isYou: true,
                     isDealer: true,
-                    cards: [{ suit: Suit.Hearts, value: CardValue.Ace }, { suit: Suit.Hearts, value: CardValue.Eight }],
+                    cards: [{ suit: Suite.Hearts, value: CardValue.Ace }, { suit: Suite.Hearts, value: CardValue.Eight }],
                     profileImage: './sully.jpg'
                 }
             },
@@ -268,7 +276,7 @@ export interface PlayerFold { type: 'PLAYER_FOLD', game: string, name: string }
 export interface PlayerAdded { type: 'PLAYER_ADDED', name: string, players: string[] }
 export interface PlayerNameChanged { type: 'PLAYER_NAME_CHANGED', name: string }
 export interface GameNameChanged { type: 'GAME_NAME_CHANGED', name: string }
-export interface StartGame { type: 'START_GAME', game: string }
+export interface StartGame { type: 'START_GAME', game: string, name: string }
 export interface GameStarted { type: 'GAME_STARTED' }
 export interface PlayerBeingDealt { type: 'PLAYER_BEING_DEALT', hand: string[] }
 export interface GameStateUpdated { type: 'UPDATE_GAME_STATE', state: PokerState }
@@ -298,9 +306,13 @@ export const actionCreators = {
     playerChange: (name: string) => ({ type: 'PLAYER_NAME_CHANGED', name: name } as PlayerNameChanged),
     startGame: (): AppThunkAction<KnownAction> => (dispatch, getState) => {
         const state = getState();
-        const poker = state.poker?.pokerState;
+        const poker = state.poker.pokerState;
+        console.log('getting poker state to start game');
+        console.log(poker);
         const game = poker === undefined ? "" : poker.name;
-        dispatch({ type: 'START_GAME', game: game });
+        var user = state.poker.pokerState.seats.filter((x) => x.seatTaken && x.player && x.player.isYou);
+        if (user[0].player)
+            dispatch({ type: 'START_GAME', game: game, name: user[0].player.playerName });
     },
     createGame: (gameName: string, buyIn: number, bigBlind: number): AppThunkAction<KnownAction> => (dispatch, getState) => {
         dispatch({ type: 'CREATE_GAME', gameName: gameName, buyIn: buyIn, bigBlind: bigBlind });
@@ -315,11 +327,7 @@ export const actionCreators = {
 
 export const reducer: Reducer<AppState> = (state: AppState | undefined, incomingAction: Action): AppState => {
     const action = incomingAction as KnownAction;
-    console.log('poker reducer');
-    console.log('currentState');
-    console.log(state);
-    console.log('action type');
-    console.log(action.type);
+
     switch (action.type) {
         case 'UPDATE_GAME_STATE':
             var newState = { ...state } as AppState;
@@ -347,18 +355,13 @@ export const reducer: Reducer<AppState> = (state: AppState | undefined, incoming
             console.log(newState);
             return newState;
         case 'RESET_CREATE_GAME':
-            console.log('resetting game state 1');
             var newState = { ...state } as AppState;
-            console.log('resetting game state 2');
             newState.createGameState = {
                 attemptedToCreate: false,
                 success: false
             };
-            console.log('resetting game state 3');
             newState.pokerState.errorMessage = '';
-            console.log('resetting game state 4');
-            console.log('game created statea');
-            console.log('resetting game state 5');
+            console.log('rest game created statea');
             console.log(newState);
             return newState;
         //case 'ADD_PLAYER':
@@ -382,7 +385,8 @@ export const reducer: Reducer<AppState> = (state: AppState | undefined, incoming
                     createGameState: {
                         attemptedToCreate: false,
                         success: false
-                    }
+                    },
+                    handHistoryState: [] as HandHistory[]
                 } as AppState;
                 return newState;
             }

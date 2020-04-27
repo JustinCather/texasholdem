@@ -10,7 +10,8 @@ namespace TexasHoldEm.Library
         Hearts,
         Diamonds,
         Clubs,
-        Spades
+        Spades,
+        Hidden
     }
 
     public enum CardValue
@@ -27,7 +28,8 @@ namespace TexasHoldEm.Library
         Ten,
         Jack,
         Queen,
-        King
+        King,
+        Hidden
     }
 
     public class Card

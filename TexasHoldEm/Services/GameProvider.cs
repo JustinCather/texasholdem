@@ -62,6 +62,41 @@ namespace TexasHoldEm.Services
             var instance = Games[game];
             return instance.GetPlayerCards(user).Select(x => new Card(x.Suite, x.Value));
         }
+
+        public GameState PrepareGameStateForPlayer(GameState state, string user)
+        {
+            foreach(var seat in state.Seats){
+                if (seat.SeatTaken && seat.Player != null)
+                {
+                    if (seat.Player.PlayerName.Equals(user))
+                    {
+                        seat.Player.IsYou = true;
+                    }
+                    else
+                    {
+                        seat.Player.IsYou = false;
+                    }
+
+                    var cards = GetPlayerCards(state.Name, seat.Player.PlayerName);
+                    if(cards != null && cards.Count(x=> x!=null) > 0)
+                    {
+                        if(seat.Player.IsYou)
+                        {
+                            seat.Player.Cards = cards;
+                        }
+                        else
+                        {
+                            seat.Player.Cards = cards.Count(x => x != null) == 0 ? cards : new List<Card> { new Card(Library.Suite.Hidden, Library.CardValue.Hidden), new Card(Library.Suite.Hidden, Library.CardValue.Hidden) };
+                        }
+                    }
+                    else
+                    {
+                        seat.Player.Cards = new List<Card>();
+                    }
+                }
+            }
+            return state;
+        }
         public bool CreateGame(string gameName, double startingMoney, double bigBlind)
         {
             if (!Games.ContainsKey(gameName))

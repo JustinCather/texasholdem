@@ -28,7 +28,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="ClientApp\src\components\HandHistory.tsx" />
     <None Remove="ClientApp\src\components\PlayerActions.tsx" />
+    <None Remove="ClientApp\src\helpers\cardImageHelper.tsx" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,12 +38,22 @@
   </ItemGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Include="ClientApp\src\components\HandHistory.tsx">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="ClientApp\src\components\PlayerActions.tsx" />
+    <TypeScriptCompile Include="ClientApp\src\helpers\cardImageHelper.tsx" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="ClientApp\public\avatars\" />
     <Folder Include="Resources\Images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ClientApp\src\components\HandHistory.js">
+      <DependentUpon>HandHistory.tsx</DependentUpon>
+    </None>
   </ItemGroup>
 
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">
