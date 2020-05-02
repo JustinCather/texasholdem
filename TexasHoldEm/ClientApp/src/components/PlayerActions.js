@@ -50,7 +50,7 @@ var PlayerActions = /** @class */ (function (_super) {
             _this.setState(newState);
         };
         _this.handleBetOrRaise = function () {
-            _this.props.bet(_this.props.name, _this.state.player.playerName, _this.state.playerBet);
+            _this.props.bet(_this.props.name, _this.state.player.playerName, (_this.state.playerBet - _this.state.player.currentBet));
             alert('Sending bet of ' + _this.state.playerBet + 'to the server');
         };
         _this.handleFold = function () {
@@ -58,11 +58,10 @@ var PlayerActions = /** @class */ (function (_super) {
             alert('Player Folded');
         };
         _this.handleCall = function () {
-            var _a;
             console.log('handling check/call');
             console.log('current table bet ' + _this.props.currentBet);
             console.log('current player bet ' + _this.state.player.currentBet);
-            _this.props.bet(_this.props.name, _this.state.player.playerName, _this.state.playerBet - ((_a = _this.state.player.currentBet) !== null && _a !== void 0 ? _a : 0));
+            _this.props.bet(_this.props.name, _this.state.player.playerName, _this.state.playerBet - _this.state.player.currentBet);
             alert('Player called the current bet');
         };
         _this.handleAllIn = function () {
@@ -115,7 +114,7 @@ var PlayerActions = /** @class */ (function (_super) {
         this.setState(newState);
     };
     PlayerActions.prototype.render = function () {
-        var _a;
+        var _a, _b;
         return (React.createElement(React.Fragment, null,
             React.createElement("div", { style: { position: 'absolute', top: '81vh', left: '42vW' } },
                 (this.state.state === 'init' && this.props.currentBet == 0 && this.state.player.availableMoney > this.props.bigBlindAmount) &&
@@ -128,7 +127,7 @@ var PlayerActions = /** @class */ (function (_super) {
                         React.createElement("button", { onClick: this.handleFold, style: { textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Fold "),
                         React.createElement("button", { onClick: this.handleCall, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Check "),
                         React.createElement("button", { onClick: this.handleAllIn, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " ALL IN! ")),
-                (this.state.state === 'init' && this.props.currentBet > 0 && this.state.player.availableMoney > this.props.currentBet) &&
+                (this.state.state === 'init' && this.props.currentBet > 0 && (this.state.player.availableMoney + this.state.player.currentBet) > this.props.currentBet && (this.state.player.availableMoney + this.state.player.currentBet) > 2 * this.props.currentBet) &&
                     React.createElement("div", null,
                         React.createElement("button", { onClick: this.handleFold, style: { textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Fold "),
                         React.createElement("button", { onClick: this.handleCall, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } },
@@ -138,7 +137,17 @@ var PlayerActions = /** @class */ (function (_super) {
                             this.props.currentBet - ((_a = this.state.player.currentBet) !== null && _a !== void 0 ? _a : 0),
                             " "),
                         React.createElement("button", { onClick: this.raise, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Raise ")),
-                (this.state.state === 'init' && this.props.currentBet > 0 && this.state.player.availableMoney <= this.props.currentBet) &&
+                (this.state.state === 'init' && this.props.currentBet > 0 && (this.state.player.availableMoney + this.state.player.currentBet) > this.props.currentBet && (this.state.player.availableMoney + this.state.player.currentBet) <= 2 * this.props.currentBet) &&
+                    React.createElement("div", null,
+                        React.createElement("button", { onClick: this.handleFold, style: { textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Fold "),
+                        React.createElement("button", { onClick: this.handleCall, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } },
+                            " Call ",
+                            React.createElement("br", null),
+                            " $",
+                            this.props.currentBet - ((_b = this.state.player.currentBet) !== null && _b !== void 0 ? _b : 0),
+                            " "),
+                        React.createElement("button", { onClick: this.handleAllIn, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " ALL IN! ")),
+                (this.state.state === 'init' && this.props.currentBet > 0 && (this.state.player.availableMoney + this.state.player.currentBet) <= this.props.currentBet) &&
                     React.createElement("div", null,
                         React.createElement("button", { onClick: this.handleFold, style: { textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " Fold "),
                         React.createElement("button", { onClick: this.handleAllIn, style: { textAlign: 'center', verticalAlign: 'top', marginLeft: '15vH', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' } }, " ALL IN! ")),

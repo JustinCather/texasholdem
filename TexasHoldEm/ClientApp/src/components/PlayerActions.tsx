@@ -64,7 +64,6 @@ class PlayerActions extends React.PureComponent<PokerProps, ActionState> {
     }
 
     raise = () => {
-
         let newState = { ...this.state };
         newState.state = 'increaseBet';
         newState.minBet = 2 * this.props.currentBet;
@@ -81,7 +80,7 @@ class PlayerActions extends React.PureComponent<PokerProps, ActionState> {
 
     handleBetOrRaise = () => {
 
-        this.props.bet(this.props.name, this.state.player.playerName, this.state.playerBet);
+        this.props.bet(this.props.name, this.state.player.playerName, (this.state.playerBet - this.state.player.currentBet));
         alert('Sending bet of ' + this.state.playerBet + 'to the server');
     }
 
@@ -94,7 +93,7 @@ class PlayerActions extends React.PureComponent<PokerProps, ActionState> {
         console.log('handling check/call');
         console.log('current table bet ' + this.props.currentBet);
         console.log('current player bet ' + this.state.player.currentBet);
-        this.props.bet(this.props.name, this.state.player.playerName, this.state.playerBet - (this.state.player.currentBet ?? 0));
+        this.props.bet(this.props.name, this.state.player.playerName, this.state.playerBet - this.state.player.currentBet);
         alert('Player called the current bet');
     }
 
@@ -135,14 +134,21 @@ class PlayerActions extends React.PureComponent<PokerProps, ActionState> {
                     </div>
                 }
 
-                {(this.state.state === 'init' && this.props.currentBet > 0 &&  this.state.player.availableMoney > this.props.currentBet) &&
+                {(this.state.state === 'init' && this.props.currentBet > 0 && (this.state.player.availableMoney + this.state.player.currentBet) > this.props.currentBet && (this.state.player.availableMoney + this.state.player.currentBet) > 2*this.props.currentBet  ) &&
                     <div>
                     <button onClick={this.handleFold} style={{ textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Fold </button>
                     <button onClick={this.handleCall} style={{ textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Call <br /> ${this.props.currentBet - (this.state.player.currentBet ?? 0)} </button>
                     <button onClick={this.raise} style={{ textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Raise </button>
                     </div>
                 }
-                {(this.state.state === 'init' && this.props.currentBet > 0 && this.state.player.availableMoney <= this.props.currentBet) &&
+                {(this.state.state === 'init' && this.props.currentBet > 0 && (this.state.player.availableMoney + this.state.player.currentBet) > this.props.currentBet && (this.state.player.availableMoney + this.state.player.currentBet) <= 2*this.props.currentBet) &&
+                    <div>
+                        <button onClick={this.handleFold} style={{ textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Fold </button>
+                        <button onClick={this.handleCall} style={{ textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Call <br /> ${this.props.currentBet - (this.state.player.currentBet ?? 0)} </button>
+                        <button onClick={this.handleAllIn} style={{ textAlign: 'center', verticalAlign: 'top', marginLeft: '10px', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> ALL IN! </button>
+                    </div>
+                }
+                {(this.state.state === 'init' && this.props.currentBet > 0 && (this.state.player.availableMoney + this.state.player.currentBet) <= this.props.currentBet) &&
                     <div>
                     <button onClick={this.handleFold} style={{ textAlign: 'center', verticalAlign: 'top', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> Fold </button>
                     <button onClick={this.handleAllIn} style={{ textAlign: 'center', verticalAlign: 'top', marginLeft: '15vH', height: '15vH', width: '15vH', borderRadius: '40%', background: 'rgb(169, 85, 85)', borderColor: 'rgb(169, 85, 85)', fontSize: '4vh', fontWeight: 'bold' }}> ALL IN! </button>

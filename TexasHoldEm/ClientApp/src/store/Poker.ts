@@ -21,7 +21,7 @@ export interface Player {
     playerName: string;
     profileImage?: string;
     availableMoney: number;
-    currentBet?: number;
+    currentBet: number;
     folded: boolean;
     allIn: boolean;
     playersTurn: boolean;

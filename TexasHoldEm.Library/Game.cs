@@ -15,20 +15,6 @@ namespace TexasHoldEm.Library
         GameOver
     }
 
-    public enum HandType
-    {
-        HighCard,
-        OnePair,
-        TwoPair,
-        ThreeOfAKind,
-        Straight,
-        Flush,
-        FullHouse,
-        FourOfAKind,
-        StraightFlush,
-        RoyalFlush,
-    }
-
     public class Game
     {
         public Game(string gameName, double buyInAmount, double bigBlindAmount)
@@ -162,88 +148,6 @@ namespace TexasHoldEm.Library
             player.AllIn = player.Chips == 0;
         }
 
-        private bool GetIsStraight(Card[] hand)
-        {
-            for (int i = 1; i < hand.Length; i++)
-            {
-                if ((hand[i - 1].Value != CardValue.King && hand[i].Value != CardValue.Ace) &&
-                    (hand[i - 1].Value + 1 != hand[i].Value))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        public (HandType HandType, int HandValue) GetHandResult(Player player)
-        {
-            return GetHandResult(player.Hand[0], player.Hand[1], Table[0], Table[1], Table[2]);
-        }
-
-        public (HandType HandType, int HandValue) GetHandResult(params Card[] hand)
-        {
-            bool isStraight;
-
-            // Sort it.
-            Array.Sort(hand, (x, y) => x.Value.CompareTo(y.Value));
-
-            //Check if this is a straight.
-            isStraight = GetIsStraight(hand);
-
-            // Handle the high/low ace condition.
-            if (!isStraight && hand[0].Value == CardValue.Ace)
-            {
-                // If this is not a straight and first card is anace, then move it to the end to be counted as high card.
-                do
-                {
-                    var temp = hand[0];
-                    for (int i = 1; i < hand.Length; i++)
-                    {
-                        hand[i - 1] = hand[i];
-                    }
-                    hand[^1] = temp;
-                } while (hand[0].Value == CardValue.Ace);
-
-                // Recheck is staight for a high straight case.
-                isStraight = GetIsStraight(hand);
-            }
-
-            var allSameSuite = hand.GroupBy(x => x.Suite).Count() == 1;
-            var highStraight = isStraight && hand[^1].Value == CardValue.Ace;
-            var bestCardValues = hand.GroupBy(x => x.Value).Select(x => (x.Key, x.Count())).OrderByDescending(x => x.Item2).Take(2).ToArray();
-            var firstValue = bestCardValues[0];
-            var secondValue = bestCardValues[1];
-            var handValue = 0;
-
-            for (int i = 0; i < hand.Length; i++)
-            {
-                if (i > 0 && hand[i].Value == CardValue.Ace)
-                {
-                    handValue += (int)CardValue.King + 1;
-                }
-
-                handValue += (int)hand[i].Value;
-            }
-
-            //todo: best of five...not quite right
-            var result = (allSameSuite, highStraight, isStraight, firstValue.Item2, secondValue.Item2) switch
-            {
-                (true, true, _, _, _) => HandType.RoyalFlush,
-                (true, _, true, _, _) => HandType.StraightFlush,
-                (_, _, _, 4, _) => HandType.FourOfAKind,
-                (_, _, _, 3, 2) => HandType.FullHouse,
-                (true, _, _, _, _) => HandType.Flush,
-                (_, _, true, _, _) => HandType.Straight,
-                (_, _, _, 3, _) => HandType.ThreeOfAKind,
-                (_, _, _, 2, 2) => HandType.TwoPair,
-                (_, _, _, 2, _) => HandType.OnePair,
-                _ => HandType.HighCard
-            };
-
-            return (result, handValue);
-        }
-
         private void NextStage()
         {
 
@@ -257,33 +161,58 @@ namespace TexasHoldEm.Library
                 Table[1] = NextCardInDeck();
                 Table[2] = NextCardInDeck();
                 State = State.Flop;
-                if (BetQueue.Count() == 0)
+                if (BetQueue.Count() == 1)
+                {
+                    BetQueue.Clear();
                     NextStage();
+                }
             }
             else if (State == State.Flop)
             {
                 RequeuePlayers();
                 Table[3] = NextCardInDeck();
                 State = State.River;
-                if (BetQueue.Count() == 0)
+                if (BetQueue.Count() == 1)
+                {
+                    BetQueue.Clear();
                     NextStage();
+                }
             }
             else if (State == State.River)
             {
                 RequeuePlayers();
                 Table[4] = NextCardInDeck();
                 State = State.Turn;
-                if (BetQueue.Count() == 0)
+                if (BetQueue.Count() == 1)
+                {
+                    BetQueue.Clear();
                     NextStage();
+                }
             }
             else
             {
+                Dictionary<string, Hand> playerHands = new Dictionary<string, Hand>();
+                foreach(var player in GetPlayersStillInGame())
+                {
+                    playerHands.Add(player.Name, new Hand(GetPlayerCards(player.Name).ToArray(), Table));
+                }
+                // Step 1 get all players hands
+                // Determine if a player should be given a chance to show cards at the end of game
+                // No option will be given if they have the best hand out of all shown
+                // This means the first player after the dealer will not be given an option (unless they are the only one left in the game
+                // iterate throught the list of players
+                // the current player will be given an option to show or hide their cards if
+                // // they cannot beat any of the previous shown hands
+                // // AND there does not exists a pot that they are the first player eligible to win
+                // manually build out bet queue best on this criteria
+                // after all those players select hide or show distribute winnings
+                // wait 5 seconds and deal next hand 
                 // Game over.
                 foreach (var pot in Pots)
                 {
                     double share = 0;
                     Player winner = null;
-                    (HandType HandType, int HandValue) winningHand = default;
+                    Hand winningHand = null;
                     var winners = new List<Player>();
 
                     if (pot.EligiblePlayers.Count() == 1)
@@ -294,18 +223,16 @@ namespace TexasHoldEm.Library
                     {
                         foreach (var p in pot.EligiblePlayers)
                         {
-                            var hand = GetHandResult(p);
+                            var hand = playerHands[p.Name];
                             if (winner == null ||
-                                hand.HandType > winningHand.HandType ||
-                                (hand.HandType == winningHand.HandType && hand.HandValue > winningHand.HandValue))
+                                hand > winningHand)
                             {
                                 winners.Clear();
                                 winningHand = hand;
                                 winner = p;
                                 winners.Add(winner);
                             }
-                            else if (hand.HandType == winningHand.HandType &&
-                                     hand.HandValue == winningHand.HandValue)
+                            else if (hand == winningHand)
                             {
                                 winners.Add(p);
                             }
@@ -336,11 +263,11 @@ namespace TexasHoldEm.Library
         private void SetPot(int index, IEnumerable<Player> playerPool = null)
         {
             var players = playerPool ?? GetPlayersStillInGame();
-            if(playerPool.Count() == 1)
+            if(players.Count() == 1)
             {
                 //there is only one player eligible for this split pot
                 //The only way they should get here if they over bet, so give them a refund
-                playerPool.ElementAt(0).Chips += playerPool.ElementAt(0).CurrentBet;
+                players.ElementAt(0).Chips += players.ElementAt(0).CurrentBet;
             }
             if (MinBet != 0 || players.Count() > 0) // We didn't check around, if we did there is no money to add to the pot
             {
@@ -416,6 +343,27 @@ namespace TexasHoldEm.Library
             }
         }
 
+        public bool ShowCards(string name)
+        {
+            var player = GetPlayer(name);
+            VerifyIsPlayersTurn(player);
+            BetQueue.RemoveFirst();
+            Pots.ForEach(x => x.RemovePlayer(player));
+            return true;
+        }
+
+        public bool HideCards(string name)
+        {
+            var player = GetPlayer(name);
+            VerifyIsPlayersTurn(player);
+            BetQueue.RemoveFirst();
+            player.Folded = true;
+            player.Hand[0] = null;
+            player.Hand[1] = null;
+            Pots.ForEach(x => x.RemovePlayer(player));
+            return false;
+        }
+
         public bool Bet(string name, double wager)
         {
              var player = GetPlayer(name);
@@ -427,7 +375,7 @@ namespace TexasHoldEm.Library
                 throw new Exception($"{player.Name} cannot bet after folding");
             }
 
-            if (wager + player.CurrentBet < MinBet)
+            if (wager + player.CurrentBet < MinBet && wager != player.Chips)
             {
                 throw new Exception($"{player.Name} attempted to bet below min bet of {MinBet}");
             }

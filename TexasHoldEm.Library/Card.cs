@@ -16,7 +16,6 @@ namespace TexasHoldEm.Library
 
     public enum CardValue
     {
-        Ace,
         Two,
         Three,
         Four,
@@ -29,6 +28,7 @@ namespace TexasHoldEm.Library
         Jack,
         Queen,
         King,
+        Ace,
         Hidden
     }
 
