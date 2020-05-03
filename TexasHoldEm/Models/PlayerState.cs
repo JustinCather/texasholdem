@@ -14,5 +14,7 @@ namespace TexasHoldEm.Models
         public bool IsYou { get; set; } = false;
         public bool IsDealer { get; set; } = false;
         public IEnumerable<Card> Cards { get; set; } = null;
+        public bool PlayerLost { get; set; }
+        public int PlayerPosition { get; set; }
     }
 }

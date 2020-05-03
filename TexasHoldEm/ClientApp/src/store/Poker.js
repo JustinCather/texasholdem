@@ -19,7 +19,9 @@ var GameState;
     GameState[GameState["Flop"] = 2] = "Flop";
     GameState[GameState["Turn"] = 3] = "Turn";
     GameState[GameState["River"] = 4] = "River";
-    GameState[GameState["GameOver"] = 5] = "GameOver";
+    GameState[GameState["DeterminingWinner"] = 5] = "DeterminingWinner";
+    GameState[GameState["DistributingPot"] = 6] = "DistributingPot";
+    GameState[GameState["GameOver"] = 7] = "GameOver";
 })(GameState = exports.GameState || (exports.GameState = {}));
 var Suite;
 (function (Suite) {
@@ -238,13 +240,17 @@ exports.actionCreators = {
     fold: function (game, name) { return function (dispatch, getState) {
         dispatch({ type: 'PLAYER_FOLD', game: game, name: name });
     }; },
+    showCards: function (game, name) { return function (dispatch, getState) {
+        dispatch({ type: "SHOW_CARDS", game: game, name: name });
+    }; },
+    hideCards: function (game, name) { return function (dispatch, getState) {
+        dispatch({ type: "HIDE_CARDS", game: game, name: name });
+    }; },
     gameChange: function (name) { return ({ type: 'GAME_NAME_CHANGED', name: name }); },
     playerChange: function (name) { return ({ type: 'PLAYER_NAME_CHANGED', name: name }); },
     startGame: function () { return function (dispatch, getState) {
         var state = getState();
         var poker = state.poker.pokerState;
-        console.log('getting poker state to start game');
-        console.log(poker);
         var game = poker === undefined ? "" : poker.name;
         var user = state.poker.pokerState.seats.filter(function (x) { return x.seatTaken && x.player && x.player.isYou; });
         if (user[0].player)
@@ -265,8 +271,6 @@ exports.reducer = function (state, incomingAction) {
         case 'UPDATE_GAME_STATE':
             var newState = __assign({}, state);
             newState.pokerState = action.state;
-            console.log('new state');
-            console.log(action.state);
             return newState;
         case 'GAME_CREATED':
             var newState = __assign({}, state);
@@ -274,8 +278,6 @@ exports.reducer = function (state, incomingAction) {
                 attemptedToCreate: true,
                 success: true
             };
-            console.log('game created statea');
-            console.log(newState);
             return newState;
         case 'GAME_ALREADY_EXISTS':
             var newState = __assign({}, state);
@@ -283,8 +285,6 @@ exports.reducer = function (state, incomingAction) {
                 attemptedToCreate: true,
                 success: false
             };
-            console.log('game created statea');
-            console.log(newState);
             return newState;
         case 'RESET_CREATE_GAME':
             var newState = __assign({}, state);
@@ -293,8 +293,6 @@ exports.reducer = function (state, incomingAction) {
                 success: false
             };
             newState.pokerState.errorMessage = '';
-            console.log('rest game created statea');
-            console.log(newState);
             return newState;
         //case 'ADD_PLAYER':
         //    return { ...state, ...{ playerName: action.name, joined: true } };

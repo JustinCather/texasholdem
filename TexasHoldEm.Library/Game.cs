@@ -12,6 +12,8 @@ namespace TexasHoldEm.Library
         Flop,
         Turn,
         River,
+        DeterminingWinner,
+        DistributingPot,
         GameOver
     }
 
@@ -24,7 +26,7 @@ namespace TexasHoldEm.Library
             BigBlindAmount = bigBlindAmount;
         }
 
-        private static readonly Random rand = new Random(42);
+        private static readonly Random rand = new Random(DateTime.Now.Millisecond);
         public const int CardsInDeck = 52;
 
         private LinkedList<Player> BetQueue { get; } = new LinkedList<Player>();
@@ -32,6 +34,7 @@ namespace TexasHoldEm.Library
         private Stack<Card> Deck { get; set; } = null;
         private int currentPotIndex = 0;
         private List<Pot> Pots { get; set; } = new List<Pot>() { new Pot() };
+        private Dictionary<string, Hand> PlayerHands = new Dictionary<string, Hand>();
         public double PotSize { get { return Pots.Sum(x => x.PotAmount); } }
         public double MinBet { get; private set; } = 0;
         public string Name { get; private set; } = string.Empty;
@@ -47,6 +50,7 @@ namespace TexasHoldEm.Library
         public List<Player> Players { get; } = new List<Player>();
         public bool WaitingForBets { get; private set; } = false;
         public string PeekBetQueue => string.Join("=>", BetQueue.ToArray().Select(x => x.Name));
+        public List<Player> ShowPlayerCards = new List<Player>();
 
         private static Stack<Card> GetNewDeck()
         {
@@ -151,11 +155,11 @@ namespace TexasHoldEm.Library
         public void NextStage()
         {
 
-            SetPot(currentPotIndex);
             //todo: verify enough players to continue play.
 
             if (State == State.Start)
             {
+                SetPot(currentPotIndex);
                 RequeuePlayers();
                 Table[0] = NextCardInDeck();
                 Table[1] = NextCardInDeck();
@@ -168,8 +172,20 @@ namespace TexasHoldEm.Library
             }
             else if (State == State.Flop)
             {
+                SetPot(currentPotIndex);
                 RequeuePlayers();
                 Table[3] = NextCardInDeck();
+                State = State.Turn;
+                if (BetQueue.Count() == 1)
+                {
+                    BetQueue.Clear();
+                }
+            }
+            else if (State == State.Turn)
+            {
+                SetPot(currentPotIndex);
+                RequeuePlayers();
+                Table[4] = NextCardInDeck();
                 State = State.River;
                 if (BetQueue.Count() == 1)
                 {
@@ -178,33 +194,65 @@ namespace TexasHoldEm.Library
             }
             else if (State == State.River)
             {
-                RequeuePlayers();
-                Table[4] = NextCardInDeck();
-                State = State.Turn;
-                if (BetQueue.Count() == 1)
+                SetPot(currentPotIndex);
+                PlayerHands = new Dictionary<string, Hand>();
+                ShowPlayerCards = new List<Player>();
+                foreach (var player in GetPlayersStillInGame())
                 {
-                    BetQueue.Clear();
+                    PlayerHands.Add(player.Name, new Hand(GetPlayerCards(player.Name).ToArray(), Table));
                 }
+                BetQueue.Clear();
+
+                State = State.DeterminingWinner;
+                var playerThatNeedToHideShow = new List<Player>();
+
+                foreach (var pot in Pots)
+                {
+                    var testPlayerShowCards = Dealer;
+                    var firstPlayerIn = false;
+                    Hand bestHand = null;
+                    do
+                    {
+                        testPlayerShowCards = PlayerAfter(testPlayerShowCards.Position);
+                        if (!testPlayerShowCards.Folded)
+                        {
+                            if (!playerThatNeedToHideShow.Contains(testPlayerShowCards))
+                            {
+                                if (!firstPlayerIn)
+                                {
+                                    firstPlayerIn = true;
+                                    bestHand = PlayerHands[testPlayerShowCards.Name];
+                                    ShowPlayerCards.Add(testPlayerShowCards);
+                                }
+                                else
+                                {
+                                    if (PlayerHands[testPlayerShowCards.Name] < bestHand)
+                                    {
+                                        playerThatNeedToHideShow.Add(testPlayerShowCards);
+                                    }
+                                    else
+                                    {
+                                        ShowPlayerCards.Add(testPlayerShowCards);
+                                        if (PlayerHands[testPlayerShowCards.Name] > bestHand)
+                                            bestHand = PlayerHands[testPlayerShowCards.Name];
+                                    }
+                                }
+                            }
+                        }
+                    } while (testPlayerShowCards != Dealer);
+                }
+                var requeuePlayer = Dealer;
+                do
+                {
+                    requeuePlayer = PlayerAfter(requeuePlayer.Position);
+                    if (playerThatNeedToHideShow.Contains(requeuePlayer))
+                        BetQueue.AddLast(requeuePlayer);
+                } while (requeuePlayer != Dealer);
             }
-            else
+            else if (State == State.DeterminingWinner)
             {
-                Dictionary<string, Hand> playerHands = new Dictionary<string, Hand>();
-                foreach(var player in GetPlayersStillInGame())
-                {
-                    playerHands.Add(player.Name, new Hand(GetPlayerCards(player.Name).ToArray(), Table));
-                }
-                // Step 1 get all players hands
-                // Determine if a player should be given a chance to show cards at the end of game
-                // No option will be given if they have the best hand out of all shown
-                // This means the first player after the dealer will not be given an option (unless they are the only one left in the game
-                // iterate throught the list of players
-                // the current player will be given an option to show or hide their cards if
-                // // they cannot beat any of the previous shown hands
-                // // AND there does not exists a pot that they are the first player eligible to win
-                // manually build out bet queue best on this criteria
-                // after all those players select hide or show distribute winnings
-                // wait 5 seconds and deal next hand 
-                // Game over.
+                State = State.DistributingPot;
+
                 foreach (var pot in Pots)
                 {
                     double share = 0;
@@ -220,7 +268,7 @@ namespace TexasHoldEm.Library
                     {
                         foreach (var p in pot.EligiblePlayers)
                         {
-                            var hand = playerHands[p.Name];
+                            var hand = PlayerHands[p.Name];
                             if (winner == null ||
                                 hand > winningHand)
                             {
@@ -238,22 +286,35 @@ namespace TexasHoldEm.Library
                     share = pot.PotAmount / winners.Count;
                     foreach (var w in winners)
                     {
-                        w.Chips += share;
+                        w.CurrentBet += share;
                     }
                 }
+                Pots.Clear();
 
+            }
+            else if (State == State.DistributingPot)
+            {
+                foreach (var p in Players)
+                {
+                    p.Chips += p.CurrentBet;
+                    p.Hand[0] = null;
+                    p.Hand[1] = null;
+                }
+                for (int i = 0; i < Table.Length; i++) Table[i] = null;
                 State = State.GameOver;
             }
-
-            foreach (var p in Players)
-            {
-                p.CurrentBet = 0;
+            else {
+                Start();
             }
 
-            MinBet = 0; // Allows checks.
-            if (State == State.GameOver)
+            if (State !=  State.DistributingPot && State != State.Start)
             {
-                Start();
+                foreach (var p in Players)
+                {
+                    p.CurrentBet = 0;
+                }
+                MinBet = 0; // Allows checks.
+
             }
         }
 
@@ -324,7 +385,7 @@ namespace TexasHoldEm.Library
 
             if (GetPlayersStillInGame().Count() == 1)
             {
-                State = State.GameOver;
+                State = State.DeterminingWinner;
                 NextStage();
                 return false;
             }
@@ -348,7 +409,16 @@ namespace TexasHoldEm.Library
             VerifyIsPlayersTurn(player);
             BetQueue.RemoveFirst();
             Pots.ForEach(x => x.RemovePlayer(player));
-            return true;
+            ShowPlayerCards.Add(player);
+            if (BetQueue.Count == 0)
+            {
+                NextStage();
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
         public bool HideCards(string name)
@@ -360,7 +430,15 @@ namespace TexasHoldEm.Library
             player.Hand[0] = null;
             player.Hand[1] = null;
             Pots.ForEach(x => x.RemovePlayer(player));
-            return false;
+            if (BetQueue.Count == 0)
+            {
+                NextStage();
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
 
         public bool Bet(string name, double wager)
@@ -464,7 +542,7 @@ namespace TexasHoldEm.Library
             Pots = new List<Pot>() { new Pot() };
             currentPotIndex = 0;
             Pots[currentPotIndex].EligiblePlayers = Players.Where(x => x.Chips > 0).ToList();
-
+            ShowPlayerCards = new List<Player>();
             // Add everyone to the bet queue.
             var nextToBet = PlayerAfterRecursive(BigBlind);
             while (nextToBet.Position != LittleBlind.Position)

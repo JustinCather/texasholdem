@@ -54,7 +54,6 @@ import AceSpades from '../Images/cards/AS.png';
 import CardBack from '../Images/cards/card-back.jpg';
 
 export function GetCardImage(card: Card) {
-    console.log('Getting Card Image');
     if (card.suite == Suite.Hidden || card.value == CardValue.Hidden) {
         return CardBack;
     } else {

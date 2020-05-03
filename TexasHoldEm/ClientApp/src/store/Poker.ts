@@ -9,6 +9,8 @@ export enum GameState {
     Flop,
     Turn,
     River,
+    DeterminingWinner,
+    DistributingPot,
     GameOver
 }
 
@@ -28,6 +30,8 @@ export interface Player {
     isYou: boolean;
     isDealer: boolean;
     cards?: Card[];
+    playerLost: boolean;
+    playerPosition: number;
 }
 
 export interface Card {
@@ -284,9 +288,11 @@ export interface CreateGame {type:'CREATE_GAME', gameName:string,buyIn:number,bi
 export interface GameCreated { type: 'GAME_CREATED' };
 export interface GameAlreayExists { type: 'GAME_ALREADY_EXISTS' };
 export interface ResetCreateGameState { type: 'RESET_CREATE_GAME' };
+export interface ShowCards { type: 'SHOW_CARDS', game: string, name: string }
+export interface HideCards { type: 'HIDE_CARDS', game: string, name: string }
 // Declare a 'discriminated union' type. This guarantees that all references to 'type' properties contain one of the
 // declared type strings (and not any other arbitrary string).
-export type KnownAction = CreateGame| ResetCreateGameState | GameCreated | GameAlreayExists|AddPlayer | GameStateUpdated | PlayerFold | PlayerBet | PlayerAdded | PlayerNameChanged | GameNameChanged | StartGame | GameStarted | PlayerBeingDealt;
+export type KnownAction = ShowCards | HideCards| CreateGame| ResetCreateGameState | GameCreated | GameAlreayExists|AddPlayer | GameStateUpdated | PlayerFold | PlayerBet | PlayerAdded | PlayerNameChanged | GameNameChanged | StartGame | GameStarted | PlayerBeingDealt;
 
 // ----------------
 // ACTION CREATORS - These are functions exposed to UI components that will trigger a state transition.
@@ -302,13 +308,17 @@ export const actionCreators = {
     fold: (game: string, name: string): AppThunkAction<KnownAction> => (dispatch, getState) => {
         dispatch({ type: 'PLAYER_FOLD', game: game, name: name });
     },
+    showCards: (game: string, name: string): AppThunkAction<KnownAction> => (dispatch, getState) => {
+        dispatch({ type: "SHOW_CARDS", game: game, name: name });
+    },
+    hideCards: (game: string, name: string): AppThunkAction<KnownAction> => (dispatch, getState) => {
+        dispatch({ type: "HIDE_CARDS", game: game, name: name });
+    },
     gameChange: (name: string) => ({ type: 'GAME_NAME_CHANGED', name: name } as GameNameChanged),
     playerChange: (name: string) => ({ type: 'PLAYER_NAME_CHANGED', name: name } as PlayerNameChanged),
     startGame: (): AppThunkAction<KnownAction> => (dispatch, getState) => {
         const state = getState();
         const poker = state.poker.pokerState;
-        console.log('getting poker state to start game');
-        console.log(poker);
         const game = poker === undefined ? "" : poker.name;
         var user = state.poker.pokerState.seats.filter((x) => x.seatTaken && x.player && x.player.isYou);
         if (user[0].player)
@@ -332,8 +342,6 @@ export const reducer: Reducer<AppState> = (state: AppState | undefined, incoming
         case 'UPDATE_GAME_STATE':
             var newState = { ...state } as AppState;
             newState.pokerState = action.state;
-            console.log('new state');
-            console.log(action.state);
             return newState;
 
         case 'GAME_CREATED':
@@ -342,8 +350,6 @@ export const reducer: Reducer<AppState> = (state: AppState | undefined, incoming
                 attemptedToCreate: true,
                 success: true
             }
-            console.log('game created statea');
-            console.log(newState);
             return newState;
         case 'GAME_ALREADY_EXISTS':
             var newState = { ...state } as AppState;
@@ -351,8 +357,6 @@ export const reducer: Reducer<AppState> = (state: AppState | undefined, incoming
                 attemptedToCreate: true,
                 success: false
             }
-            console.log('game created statea');
-            console.log(newState);
             return newState;
         case 'RESET_CREATE_GAME':
             var newState = { ...state } as AppState;
@@ -361,8 +365,6 @@ export const reducer: Reducer<AppState> = (state: AppState | undefined, incoming
                 success: false
             };
             newState.pokerState.errorMessage = '';
-            console.log('rest game created statea');
-            console.log(newState);
             return newState;
         //case 'ADD_PLAYER':
         //    return { ...state, ...{ playerName: action.name, joined: true } };

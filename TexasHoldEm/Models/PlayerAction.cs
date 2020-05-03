@@ -14,6 +14,8 @@ namespace TexasHoldEm.Models
             Start,
             Bet,
             Fold,
+            ShowCards,
+            HideCards
         }
 
         public ActionType Action { get; set; } = ActionType.Add;

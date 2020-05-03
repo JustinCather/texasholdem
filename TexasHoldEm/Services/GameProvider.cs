@@ -36,6 +36,8 @@ namespace TexasHoldEm.Services
                         AllIn = p.AllIn,
                         IsYou = false,
                         IsDealer = p == game.Dealer,
+                        PlayerPosition = p.Position,
+                        PlayerLost = game.State > Library.State.River && p == game.Current
                     },
                 };
             }
@@ -65,6 +67,8 @@ namespace TexasHoldEm.Services
         }
         public GameState PrepareGameStateForPlayer(GameState state, string user)
         {
+            var dealerPos = state.Seats.Where(s => s.Player != null && s.Player.IsDealer).FirstOrDefault()?.Player.PlayerPosition;
+            int? currentPlayerPosition = state.Seats.Where(s => s.Player != null && s.Player.PlayersTurn).FirstOrDefault()?.Player.PlayerPosition;
             foreach(var seat in state.Seats){
                 if (seat.SeatTaken && seat.Player != null)
                 {
@@ -86,7 +90,46 @@ namespace TexasHoldEm.Services
                         }
                         else
                         {
-                            seat.Player.Cards = cards.Count(x => x != null) == 0 ? cards : new List<Card> { new Card(Library.Suite.Hidden, Library.CardValue.Hidden), new Card(Library.Suite.Hidden, Library.CardValue.Hidden) };
+                            var showCards = false;
+                            if (seat.SeatTaken)
+                            {
+                                if (Games[state.Name].ShowPlayerCards.Where(x => x.Name == seat.Player.PlayerName).Count() > 0)
+                                {
+                                    showCards = true;
+                                }
+                                if(currentPlayerPosition != null && dealerPos != null && showCards)
+                                {
+                                    showCards = false;
+                                    if(currentPlayerPosition > dealerPos)
+                                    {
+                                        if(seat.Player.PlayerPosition < currentPlayerPosition && seat.Player.PlayerPosition > dealerPos)
+                                        {
+                                            showCards = true;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if(seat.Player.PlayerPosition < currentPlayerPosition || seat.Player.PlayerPosition > dealerPos)
+                                        {
+                                            showCards = true;
+                                        }
+                                    }
+                                }
+                                if (state.State == Library.State.DistributingPot)
+                                    showCards = true;
+                                if (showCards)
+                                {
+                                    seat.Player.Cards = cards;
+                                }
+                                else
+                                {
+                                    seat.Player.Cards = cards.Count(x => x != null) == 0 ? cards : new List<Card> { new Card(Library.Suite.Hidden, Library.CardValue.Hidden), new Card(Library.Suite.Hidden, Library.CardValue.Hidden) };
+                                }
+                            }
+                            else
+                            {
+                                seat.Player.Cards = cards;
+                            }
                         }
                     }
                     else
@@ -145,6 +188,21 @@ namespace TexasHoldEm.Services
             instance.Bet(name, bet);
             return GetState(instance);
         }
+
+        public GameState ShowCards(string game, string name)
+        {
+            var instance = Games[game];
+            instance.ShowCards(name);
+            return GetState(instance);
+        }
+
+        public GameState HideCards(string game, string name)
+        {
+            var instance = Games[game];
+            instance.HideCards(name);
+            return GetState(instance);
+        }
+
 
         public GameState Fold(string game, string name)
         {

@@ -102,6 +102,12 @@ namespace TexasHoldEm.Hubs
                 case PlayerAction.ActionType.Fold:
                     state = gameProvider.Fold(action.GameName, action.PlayerName);
                     break;
+                case PlayerAction.ActionType.ShowCards:
+                    state = gameProvider.ShowCards(action.GameName, action.PlayerName);
+                    break;
+                case PlayerAction.ActionType.HideCards:
+                    state = gameProvider.HideCards(action.GameName, action.PlayerName);
+                    break;
                 default:
                     break;
             }

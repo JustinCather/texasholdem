@@ -11,6 +11,8 @@ enum ActionType {
     Start,
     Bet,
     Fold,
+    ShowCards,
+    HideCards
 }
 
 
@@ -48,8 +50,6 @@ const connection = new signalR.HubConnectionBuilder()
 
 export function signalRInvokeMiddleware(store: any) {
     return (next: any) => async (action: any) => {
-        console.log('current action');
-        console.log(action);
         switch (action.type) {
             case "CREATE_GAME": {
                 var createGameAction = {
@@ -91,6 +91,27 @@ export function signalRInvokeMiddleware(store: any) {
                 connection.invoke("TakeAction", playerAction);
                 break;
             }
+            case "SHOW_CARDS": {
+                let playerAction = {
+                    Action: ActionType.ShowCards,
+                    PlayerName: action.name,
+                    GameName: action.game,
+                    Wager: 0
+                };
+                connection.invoke("TakeAction", playerAction);
+                break;
+            }
+            case "HIDE_CARDS": {
+                let playerAction = {
+                    Action: ActionType.HideCards,
+                    PlayerName: action.name,
+                    GameName: action.game,
+                    Wager: 0
+                };
+                connection.invoke("TakeAction", playerAction);
+                break;
+                break;
+            }
             case 'START_GAME':
                 let playerAction = {
                     Action: ActionType.Start,
@@ -98,8 +119,6 @@ export function signalRInvokeMiddleware(store: any) {
                     GameName: action.game,
                     Wager: 0
                 };
-                console.log('trying to start game');
-                console.log(playerAction);
                 connection.invoke('TakeAction', playerAction);
                 break;
         }
@@ -113,13 +132,10 @@ export function signalRRegisterCommands(store: any) {
     
     connection.on('newPlayerJoined', (game, added, players) => {
         store.dispatch({ type: 'PLAYER_ADDED', name: added, players: players });
-        console.log("A new player has been added");
     });
 
     connection.on('signalrGameStateUpdate', (state) => {
-        console.log(store);
         store.dispatch({ type: 'UPDATE_GAME_STATE', state: state });
-        console.log("Game State Updated");
     });
 
     connection.on('gameAlreadyExists', (state) => {
@@ -132,14 +148,12 @@ export function signalRRegisterCommands(store: any) {
     
     connection.on('gameStarted', data => {
         store.dispatch({ type: 'GAME_STARTED' });
-        console.log("The game has started");
     });
 
     connection.on('playerBeingDealt', (first, second) => {
         const cards = [first, second];
 
         store.dispatch({ type: 'PLAYER_BEING_DEALT', hand: cards });
-        console.log("The player was dealt");
     });
 
     connection.start();
