@@ -7,7 +7,6 @@ namespace TexasHoldEm.Services
     public class GameProvider
     {
         private Dictionary<string, Library.Game> Games { get; } = new Dictionary<string, Library.Game>();
-
         private GameState GetState(Library.Game game)
         {
             var state = new GameState()
@@ -60,6 +59,10 @@ namespace TexasHoldEm.Services
             return instance.GetPlayerCards(user).Select(x => new Card(x.Suite, x.Value));
         }
 
+        public bool PlayersNeedToTakeAction (string game)
+        {
+            return Games[game].Current != null;
+        }
         public GameState PrepareGameStateForPlayer(GameState state, string user)
         {
             foreach(var seat in state.Seats){
@@ -147,6 +150,13 @@ namespace TexasHoldEm.Services
         {
             var instance = Games[game];
             instance.Fold(name);
+            return GetState(instance);
+        }
+
+        public GameState AdvanceState(string game)
+        {
+            var instance = Games[game];
+            instance.NextStage();
             return GetState(instance);
         }
     }

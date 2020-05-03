@@ -1,7 +1,4 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TexasHoldEm.Models;
@@ -50,6 +47,12 @@ namespace TexasHoldEm.Hubs
                 {
                     await Clients.Client(id).SendAsync("signalrGameStateUpdate", state);
                 }
+            }
+
+            if (!gameProvider.PlayersNeedToTakeAction(state.Name) && state.State != Library.State.Waiting)
+            {
+                await Task.Delay(5000);
+                await SendGameState(gameProvider.AdvanceState(state.Name));
             }
         }
         public async Task CreateGame(CreateGame game)

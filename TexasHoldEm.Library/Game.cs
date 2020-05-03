@@ -148,7 +148,7 @@ namespace TexasHoldEm.Library
             player.AllIn = player.Chips == 0;
         }
 
-        private void NextStage()
+        public void NextStage()
         {
 
             SetPot(currentPotIndex);
@@ -161,10 +161,9 @@ namespace TexasHoldEm.Library
                 Table[1] = NextCardInDeck();
                 Table[2] = NextCardInDeck();
                 State = State.Flop;
-                if (BetQueue.Count() == 1)
+                if (BetQueue.Count() <= 1)
                 {
                     BetQueue.Clear();
-                    NextStage();
                 }
             }
             else if (State == State.Flop)
@@ -175,7 +174,6 @@ namespace TexasHoldEm.Library
                 if (BetQueue.Count() == 1)
                 {
                     BetQueue.Clear();
-                    NextStage();
                 }
             }
             else if (State == State.River)
@@ -186,7 +184,6 @@ namespace TexasHoldEm.Library
                 if (BetQueue.Count() == 1)
                 {
                     BetQueue.Clear();
-                    NextStage();
                 }
             }
             else
@@ -263,12 +260,6 @@ namespace TexasHoldEm.Library
         private void SetPot(int index, IEnumerable<Player> playerPool = null)
         {
             var players = playerPool ?? GetPlayersStillInGame();
-            if(players.Count() == 1)
-            {
-                //there is only one player eligible for this split pot
-                //The only way they should get here if they over bet, so give them a refund
-                players.ElementAt(0).Chips += players.ElementAt(0).CurrentBet;
-            }
             if (MinBet != 0 || players.Count() > 0) // We didn't check around, if we did there is no money to add to the pot
             {
                 var testValue = players.Max(x => x.CurrentBet);
@@ -295,11 +286,19 @@ namespace TexasHoldEm.Library
                         }
                     }
                     Pots[index].AddToPot(sumAddedToMainPot);
+
                     Pot newPot = new Pot();
                     newPot.EligiblePlayers = players.Where(x => x.CurrentBet > 0).ToList();
-                    Pots.Add(newPot);
-                    currentPotIndex++;
-                    SetPot(currentPotIndex, players.Where(x => x.CurrentBet > 0));
+                    if (newPot.EligiblePlayers.Count == 1)
+                    {
+                        newPot.EligiblePlayers.ElementAt(0).Chips += newPot.EligiblePlayers.ElementAt(0).CurrentBet;
+                    }
+                    else
+                    {
+                        Pots.Add(newPot);
+                        currentPotIndex++;
+                        SetPot(currentPotIndex, players.Where(x => x.CurrentBet > 0));
+                    }
                 }
             }
         }
