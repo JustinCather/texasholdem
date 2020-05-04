@@ -67,6 +67,18 @@ namespace TexasHoldEm.Hubs
                 await SendGameAlreadyExists(Context.ConnectionId);
             }
         }
+
+        public async Task SendMessage(SendMessage message)
+        {
+            var players = gameProvider.GetPlayers(message.GameName);
+            foreach (var userAndIds in userProvider.GetUsersAndIds(players))
+            {
+                foreach (var id in userAndIds.ids)
+                {
+                    await Clients.Client(id).SendAsync("newMessage", message);
+                }
+            }
+        }
         public async Task TakeAction(PlayerAction action)
         {
             GameState state = null;

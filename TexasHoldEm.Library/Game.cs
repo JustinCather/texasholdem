@@ -35,6 +35,7 @@ namespace TexasHoldEm.Library
         private int currentPotIndex = 0;
         private List<Pot> Pots { get; set; } = new List<Pot>() { new Pot() };
         private Dictionary<string, Hand> PlayerHands = new Dictionary<string, Hand>();
+        public List<HandHistory> HandHistory = new List<HandHistory>();
         public double PotSize { get { return Pots.Sum(x => x.PotAmount); } }
         public double MinBet { get; private set; } = 0;
         public string Name { get; private set; } = string.Empty;
@@ -251,6 +252,7 @@ namespace TexasHoldEm.Library
             }
             else if (State == State.DeterminingWinner)
             {
+                SetPot(currentPotIndex);
                 State = State.DistributingPot;
 
                 foreach (var pot in Pots)
@@ -289,6 +291,29 @@ namespace TexasHoldEm.Library
                         w.CurrentBet += share;
                     }
                 }
+                var allWinners = Players.Where(x => x.CurrentBet > 0);
+                if (GetPlayersStillInGame().Count() == 1)
+                {
+                    allWinners.ElementAt(0).Hand[0] = null;
+                    allWinners.ElementAt(0).Hand[1] = null;
+                    var newHandHistory = new HandHistory();
+                    newHandHistory.PlayerName = allWinners.ElementAt(0).Name;
+                    newHandHistory.MoneyWon = allWinners.ElementAt(0).CurrentBet;
+                    if (HandHistory.Count == 50)
+                        HandHistory.RemoveAt(0);
+                    HandHistory.Add(newHandHistory);
+                }
+                else
+                {
+                    foreach (var handWinner in allWinners)
+                    {
+                        var newHandHistory = new HandHistory();
+                        newHandHistory.PlayerName = handWinner.Name;
+                        newHandHistory.MoneyWon = handWinner.CurrentBet;
+                        newHandHistory.Hand = PlayerHands[newHandHistory.PlayerName];
+                        HandHistory.Add(newHandHistory);
+                    }
+                }
                 Pots.Clear();
 
             }
@@ -320,7 +345,7 @@ namespace TexasHoldEm.Library
 
         private void SetPot(int index, IEnumerable<Player> playerPool = null)
         {
-            var players = playerPool ?? GetPlayersStillInGame();
+            var players = playerPool ?? Players;
             if (MinBet != 0 || players.Count() > 0) // We didn't check around, if we did there is no money to add to the pot
             {
                 var testValue = players.Max(x => x.CurrentBet);
@@ -353,6 +378,7 @@ namespace TexasHoldEm.Library
                     if (newPot.EligiblePlayers.Count == 1)
                     {
                         newPot.EligiblePlayers.ElementAt(0).Chips += newPot.EligiblePlayers.ElementAt(0).CurrentBet;
+                        newPot.EligiblePlayers.ElementAt(0).CurrentBet = 0;
                     }
                     else
                     {
@@ -385,6 +411,7 @@ namespace TexasHoldEm.Library
 
             if (GetPlayersStillInGame().Count() == 1)
             {
+                BetQueue.Clear();
                 State = State.DeterminingWinner;
                 NextStage();
                 return false;
@@ -426,7 +453,6 @@ namespace TexasHoldEm.Library
             var player = GetPlayer(name);
             VerifyIsPlayersTurn(player);
             BetQueue.RemoveFirst();
-            player.Folded = true;
             player.Hand[0] = null;
             player.Hand[1] = null;
             Pots.ForEach(x => x.RemovePlayer(player));

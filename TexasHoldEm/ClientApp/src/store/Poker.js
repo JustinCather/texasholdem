@@ -10,6 +10,13 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 // models
 var GameState;
@@ -59,7 +66,9 @@ function BlankState() {
         communityCards: [],
         seats: [],
         joinedGame: false,
-        errorMessage: ''
+        errorMessage: '',
+        handHistory: [],
+        chat: []
     };
 }
 function NewInitState() {
@@ -261,6 +270,9 @@ exports.actionCreators = {
     }; },
     resetCreateGame: function () { return function (dispatch, getState) {
         dispatch({ type: 'RESET_CREATE_GAME' });
+    }; },
+    sendChat: function (game, player, message) { return function (dispatch, getState) {
+        dispatch({ type: 'SEND_CHAT', game: game, player: player, message: message });
     }; }
 };
 // ----------------
@@ -270,7 +282,19 @@ exports.reducer = function (state, incomingAction) {
     switch (action.type) {
         case 'UPDATE_GAME_STATE':
             var newState = __assign({}, state);
+            var tempchat = __spreadArrays(newState.pokerState.chat);
             newState.pokerState = action.state;
+            newState.pokerState.chat = tempchat;
+            return newState;
+        case 'NEW_CHAT_MESSAGE':
+            console.log('new message reducer');
+            var newState = __assign({}, state);
+            var tempPokerState = __assign({}, newState.pokerState);
+            console.log(newState);
+            tempPokerState.chat = __spreadArrays(tempPokerState.chat, [{ playerName: action.player, message: action.message }]);
+            if (tempPokerState.chat.length > 100)
+                tempPokerState.chat.shift();
+            newState.pokerState = tempPokerState;
             return newState;
         case 'GAME_CREATED':
             var newState = __assign({}, state);
@@ -314,9 +338,10 @@ exports.reducer = function (state, incomingAction) {
                     createGameState: {
                         attemptedToCreate: false,
                         success: false
-                    },
-                    handHistoryState: []
+                    }
                 };
+                console.log('init state');
+                console.log(newState);
                 return newState;
             }
             return state;

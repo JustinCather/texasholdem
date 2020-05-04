@@ -135,6 +135,7 @@ class Table extends React.PureComponent<PokerProps> {
                     {(seats[0].player && seats[0].player.playersTurn) &&
                         <PlayerActions {...this.props} />
                     }
+                    <HandHistory />
                 </React.Fragment>
             );
         }

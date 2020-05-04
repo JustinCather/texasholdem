@@ -37,7 +37,7 @@ namespace TexasHoldEm.Services
                         IsYou = false,
                         IsDealer = p == game.Dealer,
                         PlayerPosition = p.Position,
-                        PlayerLost = game.State > Library.State.River && p == game.Current
+                        PlayerLost = game.State == Library.State.DeterminingWinner && p == game.Current
                     },
                 };
             }
@@ -51,7 +51,23 @@ namespace TexasHoldEm.Services
                     };
                 }
             }
+            state.HandHistory = new List<HandHistory>();
+            foreach(var hand in game.HandHistory)
+            {
+                var message = hand.PlayerName + " won $" + hand.MoneyWon;
+                List<Card> cards = new List<Card>();
+                if (hand.Hand == null)
+                {
+                    message += ".";
+                }
+                else
+                {
+                    message += " with " + GetHandName(hand.Hand.Type) + ".";
+                    cards = hand.Hand.BestCards.Select(x => new Card(x.Suite, x.Value)).ToList();
+                }
 
+                state.HandHistory.Add(new HandHistory { Cards = cards, Message = message });
+            }
             return state;
         }
 
@@ -216,6 +232,39 @@ namespace TexasHoldEm.Services
             var instance = Games[game];
             instance.NextStage();
             return GetState(instance);
+        }
+
+        public List<string> GetPlayers(string game)
+        {
+            var instance = Games[game];
+            return instance.Players.Select(x => x.Name).ToList();
+        }
+        private string GetHandName(Library.HandType type)
+        {
+            switch (type)
+            {
+                case Library.HandType.Flush:
+                    return "a flush";
+                case Library.HandType.FourOfAKind:
+                    return "four of a kind";
+                case Library.HandType.FullHouse:
+                    return "a full house";
+                case Library.HandType.HighCard:
+                    return "a high card";
+                case Library.HandType.OnePair:
+                    return "one pair";
+                case Library.HandType.RoyalFlush:
+                    return "a royal flush";
+                case Library.HandType.Straight:
+                    return "a straight";
+                case Library.HandType.StraightFlush:
+                    return "a straight flush";
+                case Library.HandType.ThreeOfAKind:
+                    return "three of a kind";
+                case Library.HandType.TwoPair:
+                    return "two pair";
+            }
+            return "I DON'T KNOW";
         }
     }
 }

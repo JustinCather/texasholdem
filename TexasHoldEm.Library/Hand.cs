@@ -150,6 +150,20 @@ namespace TexasHoldEm.Library
 
         public static bool operator ==(Hand left, Hand right)
         {
+            if (object.ReferenceEquals(left, null))
+            {
+                return object.ReferenceEquals(right, null);
+            }
+
+            if (object.ReferenceEquals(right, null))
+            {
+                return false;
+            }
+
+            if (left == null && right == null)
+                return true;
+            if (left != null && right == null)
+                return false;
             if (left.Type != right.Type)
                 return false;
 
@@ -178,6 +192,16 @@ namespace TexasHoldEm.Library
 
         public static bool operator !=(Hand left, Hand right)
         {
+            if (object.ReferenceEquals(left, null))
+            {
+                return !object.ReferenceEquals(right, null);
+            }
+
+            if (object.ReferenceEquals(right, null))
+            {
+                return !object.ReferenceEquals(left, null);
+            }
+
             if (left.Type != right.Type)
                 return true;
 

@@ -60,6 +60,15 @@ export function signalRInvokeMiddleware(store: any) {
                 connection.invoke("CreateGame", createGameAction);
                 break;
             }
+            case "SEND_CHAT": {
+                var chatAction = {
+                    GameName: action.game,
+                    PlayerName: action.player,
+                    Message: action.message
+                }
+                connection.invoke("SendMessage", chatAction);
+                break;
+            }
             case "ADD_PLAYER": {
                 let playerAction = {
                     Action: ActionType.Add,
@@ -154,6 +163,11 @@ export function signalRRegisterCommands(store: any) {
         const cards = [first, second];
 
         store.dispatch({ type: 'PLAYER_BEING_DEALT', hand: cards });
+    });
+
+    connection.on('newMessage', (state) => {
+        console.log('new message');
+        store.dispatch({ type: 'NEW_CHAT_MESSAGE', player: state.playerName, message: state.message });
     });
 
     connection.start();

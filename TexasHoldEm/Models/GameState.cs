@@ -14,5 +14,6 @@ namespace TexasHoldEm.Models
         public Seat[] Seats { get; set; } = new Seat[9];
         public bool JoinedGame { get; set; } = true;
         public string ErrorMessage { get; set; }
+        public List<HandHistory> HandHistory { get; set; }
     }
 }
