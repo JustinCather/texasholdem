@@ -42,7 +42,7 @@ export default function configureStore(history: History, initialState?: Applicat
 }
 
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl("http://localhost:5000/poker")
+    .withUrl("/poker")
     .configureLogging(signalR.LogLevel.Information)
     .withAutomaticReconnect()
     .build();
