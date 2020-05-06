@@ -215,7 +215,7 @@ namespace TexasHoldEm.Library
                     do
                     {
                         testPlayerShowCards = PlayerAfter(testPlayerShowCards.Position);
-                        if (!testPlayerShowCards.Folded)
+                        if (!testPlayerShowCards.Folded || (testPlayerShowCards.Chips != 0 && testPlayerShowCards.Hand[0] != null))
                         {
                             if (!playerThatNeedToHideShow.Contains(testPlayerShowCards))
                             {
@@ -352,6 +352,10 @@ namespace TexasHoldEm.Library
                 if (players.All(x => x.CurrentBet == testValue || x.CurrentBet == 0))
                 {
                     Pots[index].AddToPot(Players.Sum(x => x.CurrentBet));
+                    foreach(var p in players)
+                    {
+                        p.CurrentBet = 0;
+                    }
                 }
                 else
                 {
@@ -531,7 +535,8 @@ namespace TexasHoldEm.Library
                     Name = name,
                     Position = Players.Count,
                     Chips = BuyInAmount,
-                    Avatar = avatar
+                    Avatar = avatar,
+                    Folded = true
                 };
                 PlayerLookup[name] = newPlayer;
                 Players.Add(newPlayer);
