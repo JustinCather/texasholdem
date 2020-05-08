@@ -23,5 +23,13 @@ namespace TexasHoldEm.Models
         public string PlayerName { get; set; } = string.Empty;
         public double Wager { get; set; } = 0;
         public string Avatar { get; set; }
+
+        public override string ToString()
+        {
+            return $"action: {Action}\n" +
+                $"gameName: {GameName}\n" +
+                $"playerName:{PlayerName}\n" +
+                $"wager: {Wager}";
+        }
     }
 }

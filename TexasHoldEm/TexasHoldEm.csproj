@@ -47,7 +47,12 @@
 
   <ItemGroup>
     <Folder Include="ClientApp\public\avatars\" />
-    <Folder Include="Resources\Images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Resources\Images\dummy.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

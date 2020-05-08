@@ -1,4 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Drawing.Printing;
 using System.Linq;
 using System.Threading.Tasks;
 using TexasHoldEm.Models;
@@ -10,11 +13,24 @@ namespace TexasHoldEm.Hubs
     {
         private GameProvider gameProvider;
         private UserProvider userProvider;
+        private ILogger<PokerHub> log;
 
-        public PokerHub(GameProvider gameProvider, UserProvider userProvider)
+        public PokerHub(GameProvider gameProvider, UserProvider userProvider, ILogger<PokerHub> log)
         {
             this.gameProvider = gameProvider;
             this.userProvider = userProvider;
+            this.log = log;
+        }
+
+
+        private void LogAction(PlayerAction action)
+        {
+            log.LogInformation(action.ToString());
+        }
+
+        private void LogErrorAction(Exception ex, PlayerAction action)
+        {
+            log.LogError(ex, action.ToString());
         }
 
         private async Task SendGameCreated(string userId)
@@ -83,50 +99,60 @@ namespace TexasHoldEm.Hubs
         {
             GameState state = null;
 
-            if (string.IsNullOrEmpty(action.GameName))
+            LogAction(action);
+
+            try
             {
-                throw new HubException($"{nameof(action.GameName)} must be provided");
+                if (string.IsNullOrEmpty(action.GameName))
+                {
+                    throw new HubException($"{nameof(action.GameName)} must be provided");
+                }
+
+                if (string.IsNullOrEmpty(action.PlayerName))
+                {
+                    throw new HubException($"{nameof(action.PlayerName)} must be provided");
+                }
+
+                userProvider.AddConnection(action.PlayerName, Context.ConnectionId);
+
+                switch (action.Action)
+                {
+                    case PlayerAction.ActionType.Add:
+                        state = gameProvider.AddPlayer(action.GameName, action.PlayerName, action.Avatar);
+                        if (state.JoinedGame == false && !string.IsNullOrEmpty(state.ErrorMessage))
+                        {
+                            await SendJoinStatus(Context.ConnectionId, state);
+                            return;
+                        }
+                        break;
+                    case PlayerAction.ActionType.Start:
+                        state = gameProvider.StartGame(action.GameName);
+                        break;
+                    case PlayerAction.ActionType.Bet:
+                        state = gameProvider.Bet(action.GameName, action.PlayerName, action.Wager);
+                        break;
+                    case PlayerAction.ActionType.Fold:
+                        state = gameProvider.Fold(action.GameName, action.PlayerName);
+                        break;
+                    case PlayerAction.ActionType.ShowCards:
+                        state = gameProvider.ShowCards(action.GameName, action.PlayerName);
+                        break;
+                    case PlayerAction.ActionType.HideCards:
+                        state = gameProvider.HideCards(action.GameName, action.PlayerName);
+                        break;
+                    default:
+                        break;
+                }
+
+                if (state != null)
+                {
+                    await SendGameState(state);
+                }
             }
-
-            if (string.IsNullOrEmpty(action.PlayerName))
+            catch (System.Exception ex)
             {
-                throw new HubException($"{nameof(action.PlayerName)} must be provided");
-            }
-
-            userProvider.AddConnection(action.PlayerName, Context.ConnectionId);
-
-            switch (action.Action)
-            {
-                case PlayerAction.ActionType.Add:
-                    state = gameProvider.AddPlayer(action.GameName, action.PlayerName, action.Avatar);
-                    if (state.JoinedGame == false && !string.IsNullOrEmpty(state.ErrorMessage))
-                    {
-                        await SendJoinStatus(Context.ConnectionId, state);
-                        return;
-                    }
-                    break;
-                case PlayerAction.ActionType.Start:
-                    state = gameProvider.StartGame(action.GameName);
-                    break;
-                case PlayerAction.ActionType.Bet:
-                    state = gameProvider.Bet(action.GameName, action.PlayerName, action.Wager);
-                    break;
-                case PlayerAction.ActionType.Fold:
-                    state = gameProvider.Fold(action.GameName, action.PlayerName);
-                    break;
-                case PlayerAction.ActionType.ShowCards:
-                    state = gameProvider.ShowCards(action.GameName, action.PlayerName);
-                    break;
-                case PlayerAction.ActionType.HideCards:
-                    state = gameProvider.HideCards(action.GameName, action.PlayerName);
-                    break;
-                default:
-                    break;
-            }
-
-            if (state != null)
-            {
-                await SendGameState(state);
+                LogErrorAction(ex, action);
+                throw;
             }
         }
     }
