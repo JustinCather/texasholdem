@@ -215,7 +215,7 @@ namespace TexasHoldEm.Library
                     do
                     {
                         testPlayerShowCards = PlayerAfter(testPlayerShowCards.Position);
-                        if (!testPlayerShowCards.Folded || (testPlayerShowCards.Chips != 0 && testPlayerShowCards.Hand[0] != null))
+                        if (!testPlayerShowCards.Folded && testPlayerShowCards.Chips != 0 && testPlayerShowCards.Hand[0] != null)
                         {
                             if (!playerThatNeedToHideShow.Contains(testPlayerShowCards))
                             {
