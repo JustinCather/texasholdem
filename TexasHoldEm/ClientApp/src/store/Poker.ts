@@ -48,7 +48,6 @@ export enum Suite {
 }
 
 export enum CardValue {
-    Ace,
     Two,
     Three,
     Four,
@@ -61,6 +60,7 @@ export enum CardValue {
     Jack,
     Queen,
     King,
+    Ace,
     Hidden
 }
 export interface HandHistory {
